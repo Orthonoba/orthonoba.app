@@ -1,3 +1,3 @@
-export default function Page() {
-  return null
+export default function AdminPage() {
+  return <div>Admin Panel (en construcción)</div>;
 }
