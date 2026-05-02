@@ -12,6 +12,7 @@ export type UserRole =
   | 'lab_admin'
   | 'doctor'
   | 'staff'
+  | 'instructor'    // Academy instructor — can create/manage courses
 
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended'
 

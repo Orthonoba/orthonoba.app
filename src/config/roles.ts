@@ -4,21 +4,23 @@ import type { Permission } from '@/src/config/permissions'
 // ─── Role labels (UI display + i18n key) ─────────────────────────────────────
 
 export const roleLabels: Record<UserRole, string> = {
-  super_admin: 'Super Administrador',
+  super_admin:  'Super Administrador',
   clinic_admin: 'Administrador de Clínica',
-  lab_admin: 'Administrador de Laboratorio',
-  doctor: 'Doctor',
-  staff: 'Personal de Clínica',
+  lab_admin:    'Administrador de Laboratorio',
+  doctor:       'Doctor',
+  staff:        'Personal de Clínica',
+  instructor:   'Instructor Academy',
 }
 
 // ─── Role descriptions ────────────────────────────────────────────────────────
 
 export const roleDescriptions: Record<UserRole, string> = {
-  super_admin: 'Acceso total a la plataforma Orthonoba',
+  super_admin:  'Acceso total a la plataforma Orthonoba',
   clinic_admin: 'Gestión completa de una clínica dental',
-  lab_admin: 'Gestión completa de un laboratorio dental',
-  doctor: 'Acceso clínico: pacientes, casos, órdenes y agenda',
-  staff: 'Acceso operativo: recepción, agendamiento y seguimiento',
+  lab_admin:    'Gestión completa de un laboratorio dental',
+  doctor:       'Acceso clínico: pacientes, casos, órdenes y agenda',
+  staff:        'Acceso operativo: recepción, agendamiento y seguimiento',
+  instructor:   'Instructor de Orthonoba Academy — crea y gestiona cursos',
 }
 
 // ─── Permission matrix ────────────────────────────────────────────────────────
@@ -37,6 +39,8 @@ export const rolePermissions: Record<UserRole, Array<Permission | '*'>> = {
     'clinic.manage', 'clinic.settings', 'clinic.integrations',
     'staff.read', 'staff.manage', 'staff.invite',
     'reports.view', 'reports.export',
+    'marketing.read', 'marketing.write', 'marketing.campaigns', 'marketing.leads', 'marketing.analytics', 'marketing.social',
+    'academy.read', 'academy.enroll', 'academy.manage', 'academy.certificates',
   ],
 
   lab_admin: [
@@ -58,6 +62,7 @@ export const rolePermissions: Record<UserRole, Array<Permission | '*'>> = {
     'files.read', 'files.upload',
     'cad.access',
     'reports.view',
+    'academy.read', 'academy.enroll',
   ],
 
   staff: [
@@ -68,6 +73,12 @@ export const rolePermissions: Record<UserRole, Array<Permission | '*'>> = {
     'billing.read',
     'files.read', 'files.upload',
     'staff.read',
+    'academy.read', 'academy.enroll',
+  ],
+
+  instructor: [
+    'academy.read', 'academy.enroll', 'academy.instruct', 'academy.manage', 'academy.certificates',
+    'reports.view',
   ],
 }
 

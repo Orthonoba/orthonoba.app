@@ -292,6 +292,24 @@ export interface ShipmentTracking {
   updatedAt?: string
 }
 
+// ─── Pickup Request (clinic-initiated collection request linked to an order) ──
+
+export type PickupRequestStatus = 'pending' | 'scheduled' | 'picked_up' | 'cancelled'
+
+export interface PickupRequest {
+  id: string
+  clinicId: string
+  orderId: string
+  status: PickupRequestStatus
+  requestedAt: string
+  scheduledAt?: string
+  notes?: string
+  /** References a PickupJob once a driver is assigned */
+  pickupJobId?: string
+  createdAt: string
+  updatedAt?: string
+}
+
 // ─── Order Status History (audit trail) ──────────────────────────────────────
 
 export interface OrderStatusHistory {

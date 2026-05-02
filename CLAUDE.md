@@ -34,10 +34,18 @@ app/                           ← Rutas Next.js únicamente (no lógica aquí)
     auth/route.ts
     clinics/route.ts
     orders/route.ts
-    pickups/route.ts
-    plans/route.ts
-    users/route.ts
-    webhooks/stripe/route.ts
+    v1/
+      plans/route.ts                ← GET plan catalog (public)
+      billing/route.ts              ← GET subscription + invoices
+      billing/subscriptions/route.ts
+      billing/upgrade/route.ts      ← POST upgrade/downgrade + proration
+      billing/cancel/route.ts       ← POST cancel / resume
+      billing/portal/route.ts       ← POST Stripe Customer Portal URL
+      billing/coupons/route.ts      ← GET validate, POST apply coupon
+      billing/invoices/route.ts
+      stripe/checkout/route.ts
+      stripe/webhooks/route.ts
+      webhooks/stripe/route.ts      ← canonical webhook endpoint
   marketing/layout.tsx, page.tsx
   layout.tsx, page.tsx
 
@@ -54,14 +62,17 @@ src/                           ← Toda la lógica, tipos, config, stores, hooks
     clinic.ts                  ← Clinic, TenantContext, PlanTier, Address,
                                   BusinessHours, ClinicSettings, ClinicModule,
                                   ClinicIntegration
-    lab.ts                     ← LabProfile, LabTechnician, LabMaterial,
-                                  LabWorkstation, LabProductionSlot
+    lab.ts                     ← LabProfile, LabTechnician, LabMaterial, LabWorkstation
+    delivery.ts                ← PickupJob, DeliveryDriver, DeliveryRoute,
+                                  DriverLocationUpdate, DeliveryRouteStop
+    tracking.ts                ← TrackingEvent, OrderTimeline, OrderTrackingKPIs
     patient.ts                 ← Patient, MedicalHistory, Odontogram,
                                   Appointment, TreatmentPlan, ClinicalNote, ToothFDI
     orders.ts                  ← DentalOrder, OrderFile, CadDesign, PickupRequest,
                                   ShipmentTracking, ProductionStage, QualityCheckResult
-    billing.ts                 ← Invoice, Payment, Quote, CreditNote,
-                                  Subscription, TaxRate, PaymentLink
+    billing.ts                 ← Invoice, Payment, Quote, CreditNote, Subscription,
+                                  TaxRate, PaymentLink, Coupon, BillingCycle,
+                                  TokenBalance, TokenTransaction, UsageRecord
     marketing.ts               ← Campaign, Lead, UTMParams, ReviewRequest,
                                   ReferralProgram, SeoSnapshot
     order.ts                   ← OBSOLETO — no extender, usar orders.ts
@@ -75,11 +86,21 @@ src/                           ← Toda la lógica, tipos, config, stores, hooks
     mock-users.ts              ← usuarios demo (sustituir por query DB)
     mock-clinics.ts            ← clínicas demo (sustituir por query DB)
     db.ts                      ← stub cliente Neon DB (no conectado)
+  services/
+    stripe/index.ts            ← lazy Stripe client proxy (edge-safe)
+    stripe/billing.ts          ← checkout, portal, plan change, proration
+    stripe/webhooks.ts         ← verifySignature + 15 event handlers
+    stripe/coupons.ts          ← validate, apply, create promotion codes
+  modules/
+    billing/service.ts         ← IBillingService interface
+    billing/validators.ts      ← Zod: checkout, upgrade, cancel, coupon, portal
+    billing/subscription-store.ts ← in-memory sub store (swap for Neon DB)
   config/
     permissions.ts             ← tipo Permission (15 permisos)
     roles.ts                   ← rolePermissions, roleLabels, hasPermission()
     site.ts                    ← siteConfig (baseDomain, devBaseDomain, subdomains)
-    plans.ts                   ← planes free | pro | enterprise
+    plans.ts                   ← PlanConfig, PLANS, getStripePriceId, TOKEN_ALLOCATIONS
+                                  Starter | Growth | Scale | Enterprise
     navigation.ts, theme.ts    ← configuración navegación y tema
   hooks/
     use.Role.ts                ← useRole() → { role, can, is, isAdmin }

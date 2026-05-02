@@ -59,6 +59,21 @@ export type Permission =
   | 'reports.view'
   | 'reports.export'
 
+  // Academy / LMS
+  | 'academy.read'
+  | 'academy.enroll'
+  | 'academy.manage'       // create/edit courses and lessons
+  | 'academy.instruct'     // instructor access (submit lessons, quizzes)
+  | 'academy.certificates' // issue / revoke certificates
+
+  // Marketing
+  | 'marketing.read'
+  | 'marketing.write'
+  | 'marketing.campaigns'
+  | 'marketing.leads'
+  | 'marketing.analytics'
+  | 'marketing.social'
+
   // Platform (super_admin only)
   | 'platform.clinics'
   | 'platform.billing'

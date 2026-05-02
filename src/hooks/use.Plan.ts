@@ -3,26 +3,31 @@ import { useClinicStore } from '@/src/store/clinic-store'
 import type { PlanTier } from '@/src/types/clinic'
 
 const planRank: Record<PlanTier, number> = {
-  free: 0,
-  pro: 1,
-  enterprise: 2,
+  starter:    0,
+  growth:     1,
+  scale:      2,
+  enterprise: 3,
 }
 
 export function usePlan() {
   const clinic = useClinicStore((s) => s.clinic)
-  const plan: PlanTier = clinic?.plan ?? 'free'
+  const plan: PlanTier = clinic?.plan ?? 'starter'
 
   function hasAccess(required: PlanTier): boolean {
     return planRank[plan] >= planRank[required]
   }
 
-  function isPro(): boolean {
-    return hasAccess('pro')
+  function isGrowth(): boolean {
+    return hasAccess('growth')
+  }
+
+  function isScale(): boolean {
+    return hasAccess('scale')
   }
 
   function isEnterprise(): boolean {
     return hasAccess('enterprise')
   }
 
-  return { plan, hasAccess, isPro, isEnterprise }
+  return { plan, hasAccess, isGrowth, isScale, isEnterprise }
 }

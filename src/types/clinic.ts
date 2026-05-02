@@ -6,7 +6,7 @@ export type TenantType = 'clinic' | 'lab'
 
 export type TenantStatus = 'active' | 'inactive' | 'suspended' | 'trial'
 
-export type PlanTier = 'free' | 'pro' | 'enterprise'
+export type PlanTier = 'starter' | 'growth' | 'scale' | 'enterprise'
 
 // ─── Structured Address ───────────────────────────────────────────────────────
 

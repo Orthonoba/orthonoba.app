@@ -2,7 +2,7 @@ import type { FileType } from '@/src/types/orders'
 
 // ─── Upload constraints ────────────────────────────────────────────────────────
 
-export const ALLOWED_FILE_TYPES: FileType[] = ['stl', 'dicom', 'jpg', 'png', 'obj', 'ply', 'pdf', 'dcm', 'zip']
+export const ALLOWED_FILE_TYPES: FileType[] = ['stl', 'dicom', 'jpg', 'png', 'obj', 'ply', 'pdf', 'dcm', 'zip', 'niri']
 
 export const MAX_FILE_SIZES: Record<FileType, number> = {
   stl: 500 * 1024 * 1024,     // 500 MB
@@ -14,6 +14,7 @@ export const MAX_FILE_SIZES: Record<FileType, number> = {
   jpg: 20 * 1024 * 1024,      // 20 MB
   png: 20 * 1024 * 1024,      // 20 MB
   zip: 1024 * 1024 * 1024,    // 1 GB
+  niri: 500 * 1024 * 1024,   // 500 MB — NIRI near-infrared images
 }
 
 export const MIME_TYPE_MAP: Record<string, FileType> = {

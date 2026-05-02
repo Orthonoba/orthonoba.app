@@ -50,7 +50,7 @@ export function withTenant<P = Record<string, string>>(handler: TenantHandler<P>
       subdomain: req.headers.get('x-subdomain') ?? clinicId,
       clinicName: req.headers.get('x-clinic-name') ?? clinicId,
       type: (req.headers.get('x-clinic-type') as TenantContext['type']) ?? 'clinic',
-      plan: clinic?.plan ?? 'free',
+      plan: clinic?.plan ?? 'starter',
     }
 
     const params = await context.params

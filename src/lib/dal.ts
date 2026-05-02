@@ -38,7 +38,7 @@ export const getTenantContext = cache(async (): Promise<TenantContext | null> =>
   if (!clinicId || !subdomain || !clinicName || !clinicType) return null
 
   const clinic = getClinicById(clinicId)
-  const plan = clinic?.plan ?? 'free'
+  const plan = clinic?.plan ?? 'starter'
 
   return { clinicId, subdomain, clinicName, type: clinicType, plan }
 })

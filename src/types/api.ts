@@ -49,6 +49,9 @@ export type ErrorCode =
   | 'STRIPE_ERROR'
   | 'FILE_TOO_LARGE'
   | 'INVALID_FILE_TYPE'
+  | 'COUPON_INVALID'
+  | 'COUPON_EXPIRED'
+  | 'SUBSCRIPTION_REQUIRED'
 
 // ─── Factory helpers (used in route handlers) ────────────────────────────────
 
@@ -101,4 +104,7 @@ export const HTTP_STATUS: Record<ErrorCode, number> = {
   STRIPE_ERROR: 402,
   FILE_TOO_LARGE: 413,
   INVALID_FILE_TYPE: 415,
+  COUPON_INVALID: 422,
+  COUPON_EXPIRED: 422,
+  SUBSCRIPTION_REQUIRED: 402,
 }

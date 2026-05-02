@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+// ─── Invoice validators ───────────────────────────────────────────────────────
+
 const invoiceLineSchema = z.object({
   description: z.string().min(1).max(500),
   quantity: z.number().positive().max(9999),
@@ -31,6 +33,54 @@ export const recordPaymentSchema = z.object({
   paidAt: z.string().datetime({ offset: true }),
 })
 
-export type CreateInvoiceInput = z.infer<typeof createInvoiceSchema>
-export type CreateQuoteInput = z.infer<typeof createQuoteSchema>
-export type RecordPaymentInput = z.infer<typeof recordPaymentSchema>
+// ─── SaaS checkout validators ─────────────────────────────────────────────────
+
+export const checkoutSchema = z.object({
+  plan: z.enum(['starter', 'growth', 'scale', 'enterprise']),
+  billingCycle: z.enum(['monthly', 'annual']).default('monthly'),
+  promotionCode: z.string().min(1).max(50).toUpperCase().optional(),
+  successUrl: z.string().url().optional(),
+  cancelUrl: z.string().url().optional(),
+})
+
+export const upgradeSchema = z.object({
+  plan: z.enum(['starter', 'growth', 'scale', 'enterprise']),
+  billingCycle: z.enum(['monthly', 'annual']).default('monthly'),
+  /** Preview proration before committing */
+  preview: z.boolean().default(false),
+})
+
+export const cancelSchema = z.object({
+  /** true = cancel at period end (default), false = cancel immediately */
+  atPeriodEnd: z.boolean().default(true),
+  reason: z.string().max(500).optional(),
+})
+
+// ─── Coupon validators ────────────────────────────────────────────────────────
+
+export const validateCouponSchema = z.object({
+  code: z.string().min(1).max(50).toUpperCase(),
+  plan: z.enum(['starter', 'growth', 'scale', 'enterprise']).optional(),
+})
+
+export const applyCouponSchema = z.object({
+  code: z.string().min(1).max(50).toUpperCase(),
+})
+
+// ─── Portal validator ─────────────────────────────────────────────────────────
+
+export const portalSchema = z.object({
+  returnUrl: z.string().url().optional(),
+})
+
+// ─── Inferred types ───────────────────────────────────────────────────────────
+
+export type CreateInvoiceInput      = z.infer<typeof createInvoiceSchema>
+export type CreateQuoteInput        = z.infer<typeof createQuoteSchema>
+export type RecordPaymentInput      = z.infer<typeof recordPaymentSchema>
+export type CheckoutInput           = z.infer<typeof checkoutSchema>
+export type UpgradeInput            = z.infer<typeof upgradeSchema>
+export type CancelInput             = z.infer<typeof cancelSchema>
+export type ValidateCouponInput     = z.infer<typeof validateCouponSchema>
+export type ApplyCouponInput        = z.infer<typeof applyCouponSchema>
+export type PortalInput             = z.infer<typeof portalSchema>
