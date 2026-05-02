@@ -65,7 +65,7 @@ export const verifyTenantAccess = cache(async (): Promise<{
   const ctx = await getTenantContext()
   if (!ctx) redirect('/login')
 
-  const isAdmin = session.role === 'admin'
+  const isAdmin = session.role === 'super_admin'
   const belongsToClinic = session.clinicId === ctx.clinicId
 
   if (!isAdmin && !belongsToClinic) redirect('/login')

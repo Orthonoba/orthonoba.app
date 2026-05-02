@@ -1,10 +1,21 @@
-// ─── Roles ────────────────────────────────────────────────────────────────────
+// ─── Roles — 5-tier enterprise RBAC ──────────────────────────────────────────
+//
+//  super_admin   Platform-wide administrator (Orthonoba team)
+//  clinic_admin  Owner / admin of a specific dental clinic
+//  lab_admin     Owner / admin of a dental laboratory
+//  doctor        Treating dentist / specialist
+//  staff         Clinic staff (receptionist, dental assistant, hygienist)
 
-export type UserRole = 'admin' | 'dentist' | 'assistant' | 'lab'
+export type UserRole =
+  | 'super_admin'
+  | 'clinic_admin'
+  | 'lab_admin'
+  | 'doctor'
+  | 'staff'
 
-export type UserStatus = 'active' | 'inactive' | 'pending'
+export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended'
 
-// ─── Core Entity ──────────────────────────────────────────────────────────────
+// ─── Core User Entity ─────────────────────────────────────────────────────────
 
 export interface User {
   id: string
@@ -12,10 +23,17 @@ export interface User {
   email: string
   role: UserRole
   status: UserStatus
-  /** null = platform-level admin (not scoped to a clinic) */
+  /**
+   * null  = super_admin (not scoped to any tenant)
+   * str   = clinicId or labId this user belongs to
+   */
   clinicId: string | null
   phone?: string
   avatar?: string
+  /** ISO 3166-1 alpha-2, e.g. 'ES' */
+  country?: string
+  /** Preferred locale, e.g. 'es-ES' */
+  locale?: string
   createdAt: string
   updatedAt?: string
   lastLoginAt?: string
@@ -30,7 +48,7 @@ export interface SessionPayload {
   expiresAt: string
 }
 
-// ─── Invitations ──────────────────────────────────────────────────────────────
+// ─── Staff Invitations ────────────────────────────────────────────────────────
 
 export interface UserInvite {
   id: string

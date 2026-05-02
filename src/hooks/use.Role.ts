@@ -18,7 +18,15 @@ export function useRole() {
   }
 
   function isAdmin(): boolean {
-    return role === 'admin'
+    return role === 'super_admin' || role === 'clinic_admin' || role === 'lab_admin'
+  }
+
+  function isSuperAdmin(): boolean {
+    return role === 'super_admin'
+  }
+
+  function isDoctor(): boolean {
+    return role === 'doctor'
   }
 
   return { role, can, is, isAdmin }

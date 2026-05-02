@@ -1,166 +1,169 @@
-# ORTHONOBA - CLAUDE CODE INSTRUCTIONS
+# ORTHONOBA — CLAUDE.md
 
-## Project Overview
+## Stack
 
-Orthonoba is a SaaS platform for dental clinics and dental laboratories.
-It includes modules for:
-
-- Patient management
-- Clinical records
-- Dental charts (odontogram)
-- Orders (aligners, retainers, mouthguards)
-- Billing and payments
-- Multi-tenant architecture (one clinic per subdomain)
+- Next.js 16.2.4 (App Router) — React 19, TypeScript strict
+- Zustand 5.x con `persist` middleware
+- TailwindCSS v4 (`@tailwindcss/postcss`)
+- jose (JWT signing, edge-safe)
+- Mock data — DB no conectada, preparada para Neon DB
+- Sin ORM ni proveedor de auth externo
 
 ---
 
-## Tech Stack
+## Path Alias
 
-- Next.js (App Router)
-- TypeScript (strict mode)
-- Zustand (state management)
-- TailwindCSS (styling)
-- REST API routes (Next.js /app/api)
-- Modular architecture (feature-based structure)
+`"@/*": ["./*"]` — la raíz es la carpeta del proyecto, **no** `src/`.
 
----
-
-## IMPORTANT RULES
-
-### 1. DO NOT BREAK ARCHITECTURE
-
-- Always respect existing folder structure inside `/src`
-- Do NOT create duplicate folders like another `/app`
-- Do NOT restructure without explicit instruction
+```
+@/src/lib/dal      ✓      @/lib/dal      ✗
+@/src/types/user   ✓      @/types/user   ✗
+```
 
 ---
 
-### 2. CODE STYLE
+## Mapa de Directorios
 
-- Use TypeScript for everything
-- Avoid `any` unless absolutely necessary
-- Prefer interfaces over types for entities
-- Keep components small and reusable
-- Use functional components only
+```
+app/                           ← Rutas Next.js únicamente (no lógica aquí)
+  (auth)/login/page.tsx        ← /login
+  dashboard/layout.tsx         ← verifySession() + StoreHydrator
+  dashboard/page.tsx
+  admin/                       ← panel de administración
+  api/
+    auth/route.ts
+    clinics/route.ts
+    orders/route.ts
+    pickups/route.ts
+    plans/route.ts
+    users/route.ts
+    webhooks/stripe/route.ts
+  marketing/layout.tsx, page.tsx
+  layout.tsx, page.tsx
 
----
-
-### 3. STATE MANAGEMENT
-
-- Use Zustand stores located in `/src/store`
-- Do not mix UI state with business logic
-- Keep stores separated:
-  - auth-store
-  - clinic-store
-  - ui-store
-
----
-
-### 4. API RULES
-
-- All backend logic must go inside `/src/app/api`
-- Use REST conventions:
-  - GET = fetch
-  - POST = create
-  - PUT/PATCH = update
-  - DELETE = remove
-
----
-
-### 5. MULTI-TENANT RULE
-
-- Each clinic is identified by subdomain
-  Example:
-  - clinic1.orthonoba.app
-  - clinic2.orthonoba.app
-
-- Data must always be scoped by clinicId
-
----
-
-### 6. UI RULES
-
-- Use existing components in `/src/components`
-- Reuse UI primitives from `/ui`
-- Maintain clean dashboard layout:
-  - sidebar
-  - navbar
-  - main content area
-
----
-
-### 7. FILE GENERATION RULE
-
-When generating code:
-
-- Always place files in correct module folder
-- Avoid duplicating logic
-- Prefer extending existing code instead of rewriting
-
----
-
-## CORE MODULES
-
-### AUTH
-
-- login
-- logout
-- session handling
-- role-based access control
-
----
-
-### CLINIC
-
-- clinic profile
-- staff members
-- settings per clinic
+src/                           ← Toda la lógica, tipos, config, stores, hooks
+  middleware.ts                ← subdominio + guard sesión + headers tenant
+  app/
+    actions/auth.ts            ← loginAction, logoutAction  ('use server')
+  store/
+    auth-store.ts              ← persist 'orthonoba-auth' | AuthStatus state machine
+    clinic-store.ts            ← persist 'orthonoba-clinic' | TenantContext
+    ui-store.ts                ← estado sidebar (sin persist)
+  types/
+    user.ts                    ← User, UserRole, UserStatus, SessionPayload, UserInvite
+    clinic.ts                  ← Clinic, TenantContext, PlanTier, Address,
+                                  BusinessHours, ClinicSettings, ClinicModule,
+                                  ClinicIntegration
+    lab.ts                     ← LabProfile, LabTechnician, LabMaterial,
+                                  LabWorkstation, LabProductionSlot
+    patient.ts                 ← Patient, MedicalHistory, Odontogram,
+                                  Appointment, TreatmentPlan, ClinicalNote, ToothFDI
+    orders.ts                  ← DentalOrder, OrderFile, CadDesign, PickupRequest,
+                                  ShipmentTracking, ProductionStage, QualityCheckResult
+    billing.ts                 ← Invoice, Payment, Quote, CreditNote,
+                                  Subscription, TaxRate, PaymentLink
+    marketing.ts               ← Campaign, Lead, UTMParams, ReviewRequest,
+                                  ReferralProgram, SeoSnapshot
+    order.ts                   ← OBSOLETO — no extender, usar orders.ts
+  lib/
+    session.ts                 ← encrypt/decrypt JWT (jose, edge-safe, sin cookies)
+    auth.ts                    ← createSession / deleteSession / getSession (server-only)
+    auth-service.ts            ← IAuthService + MockAuthService singleton (swappable)
+    dal.ts                     ← verifySession, getCurrentUser, getTenantContext,
+                                  verifyTenantAccess, checkPermission, requirePermission
+    route-guard.ts             ← canAccess(), getRedirectUrl() — lógica pura sin Next.js
+    mock-users.ts              ← usuarios demo (sustituir por query DB)
+    mock-clinics.ts            ← clínicas demo (sustituir por query DB)
+    db.ts                      ← stub cliente Neon DB (no conectado)
+  config/
+    permissions.ts             ← tipo Permission (15 permisos)
+    roles.ts                   ← rolePermissions, roleLabels, hasPermission()
+    site.ts                    ← siteConfig (baseDomain, devBaseDomain, subdomains)
+    plans.ts                   ← planes free | pro | enterprise
+    navigation.ts, theme.ts    ← configuración navegación y tema
+  hooks/
+    use.Role.ts                ← useRole() → { role, can, is, isAdmin }
+    use.Plan.ts                ← usePlan() → { plan, hasAccess, isPro, isEnterprise }
+    useLocale.ts               ← useLocale() → 'es' | 'en' | 'pt'
+  components/
+    ui/                        ← button, input, card, badge, modal (primitivos)
+    ui/login-form.tsx          ← useActionState + loginAction
+    ui/store-hydrator.tsx      ← sincroniza user servidor → Zustand
+    ui/logout-button.tsx
+    navbar/navbar.tsx
+    sidebar/sidebar.tsx
+    layouts/dashboard-shell.tsx
+    layouts/marketing-shell.tsx
+  styles/
+    globals.css, variables.css, theme.css
+  docs/skills.md               ← mapa funcional canónico (fuente de verdad de alcance)
+```
 
 ---
 
-### PATIENTS
+## Reglas de Arquitectura
 
-- patient records
-- clinical history
-- attachments
+### Rutas vs Lógica
+- `app/` → solo rutas, layouts, páginas, handlers API
+- `src/` → toda la lógica, tipos, config, stores, hooks, componentes
+- Server Actions → `src/app/actions/`, nunca inline en páginas
+- Rutas API → `app/api/` (raíz), **no** `src/app/api/`
+
+### Flujo Auth
+1. `middleware.ts` descifra JWT cookie → llama `getRedirectUrl()` (lógica pura)
+2. Layout llama `verifySession()` desde `src/lib/dal.ts` como segunda barrera
+3. `StoreHydrator` sincroniza user resuelto servidor → Zustand cliente
+4. Nunca llamar `authService` desde una página — usar Server Actions o DAL
+
+### Tenant Multi-tenant
+- Middleware inyecta headers: `x-clinic-id`, `x-clinic-name`, `x-clinic-type`, `x-subdomain`
+- Leer tenant en Server Components vía `getTenantContext()` / `getCurrentClinic()` (DAL)
+- Todo write de datos debe incluir `clinicId`
+- Producción: `{subdomain}.orthonoba.app` | Dev: `{subdomain}.localhost` o `{subdomain}.lvh.me`
+
+### Zustand
+- Stores = estado reactivo UI únicamente, sin lógica de negocio
+- Verdad del servidor → Zustand vía `StoreHydrator`, no vía fetch cliente
+- Usar `useRole()` y `usePlan()` para control de acceso
+
+### Tipos
+- Usar `src/types/orders.ts` — nunca extender `src/types/order.ts` (obsoleto)
+- Preferir `interface` sobre `type` para entidades
+- Nunca usar `any` — usar `unknown` + narrowing
+
+### Mock Data
+- No conectar DB real. `src/lib/db.ts` permanece como stub
+- Al integrar Neon DB: sustituir lookups en `mock-users.ts` / `mock-clinics.ts`
+- `authService` diseñado para swap: `MockAuthService` → `ApiAuthService`
+
+### Generación de Código
+- Colocar cada archivo en su carpeta de módulo correcta
+- Extender código existente antes de reescribir
+- No crear carpetas duplicadas sin instrucción explícita
 
 ---
 
-### ORDERS
+## Roles y Permisos
 
-- dental manufacturing orders
-- status tracking
-- lab integration
+**15 permisos**: `patients.read/write/delete` · `orders.read/write/delete` ·
+`billing.read/write` · `files.upload/read/delete` · `clinic.manage` ·
+`lab.manage` · `staff.manage` · `cad.access`
 
----
+| Rol | Estado | Acceso |
+|---|---|---|
+| `admin` | ✅ implementado | `*` todo |
+| `dentist` | ✅ implementado | patients rw · orders rw · billing.read · files r+upload · cad |
+| `assistant` | ✅ implementado | patients.read · orders.read · files.read |
+| `lab` | ✅ implementado | orders rw · files r+upload · lab.manage · cad |
+| `clinic_owner` | 🔲 pendiente | admin limitado a un solo tenant |
+| `lab_user` | 🔲 pendiente | renombrar `lab` → `lab_user` |
+| `marketing_manager` | 🔲 pendiente | acceso módulo marketing |
 
-### BILLING
-
-- invoices
-- payments
-- status tracking
-
----
-
-## GOAL
-
-Build a scalable SaaS system for dental clinics that can support:
-
-- multi-clinic deployment
-- secure patient data
-- fast UI performance
-- modular expansion
+Para añadir un rol: `src/types/user.ts` → `src/config/roles.ts` → `src/lib/route-guard.ts`
 
 ---
 
-## FINAL INSTRUCTION
+## Alcance Funcional
 
-Always prioritize:
-
-1. Correct architecture
-2. Maintainability
-3. Scalability
-4. Real-world SaaS structure
-
-Do NOT generate experimental or inconsistent structures.
-Trabaja con datos mock. No conectes base de datos aun. Manten arquitectura preparada para la integarcion posterior con Neon DB.
+Ver `src/docs/skills.md` — es la fuente de verdad para el mapa de features.
+No duplicar el listado de módulos en este archivo.
