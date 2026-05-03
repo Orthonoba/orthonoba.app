@@ -53,6 +53,20 @@ app/                           ← Rutas Next.js únicamente (no lógica aquí)
       social/posts · social/schedule
       templates · reviews · referrals/[id]/link
       analytics
+    automation/
+      rules/[ruleId]           ← CRUD reglas + historial ejecuciones
+      executions               ← log de ejecuciones
+      reminders                ← smart reminders + ?dispatch=true
+    ai/
+      leads/qualify            ← GET ?leadId= o ?batch=true&limit=
+      campaigns/suggest        ← GET sugerencias AI por KPIs
+      orders/predict           ← POST predicción tratamientos por paciente
+      retention/risks          ← POST análisis churn por batch de pacientes
+      crm/insights             ← GET report inteligencia CRM
+      tasks                    ← GET/POST cola de tareas agénticas (futuro)
+    notifications/
+      whatsapp                 ← POST envío + GET webhook verificación Meta
+      email                    ← POST email transaccional
     courses/                   ← Orthonoba Academy (LMS)
       categories · my
       [courseId]/
@@ -88,6 +102,10 @@ src/                           ← Toda la lógica, tipos, config, stores, hooks
     marketing.ts               ← Campaign, Lead, GoogleAdsCampaign, MetaCampaign,
                                   LandingPage, LeadFunnel, LeadScore, SocialPost,
                                   MarketingTemplate, MarketingDashboardKPIs
+    automation.ts              ← AutomationRule, AutomationExecution, SmartReminder,
+                                  WhatsAppMessage, AgentTask, IAIProvider,
+                                  AILeadQualification, CampaignSuggestion,
+                                  OrderPrediction, PatientChurnRisk, CRMIntelligenceReport
     academy.ts                 ← Course, Lesson, CourseSection, Instructor, Quiz,
                                   CourseEnrollment, LessonProgress, Certificate,
                                   CourseReview, LiveSession, AcademyDashboardKPIs
@@ -103,6 +121,20 @@ src/                           ← Toda la lógica, tipos, config, stores, hooks
     mock-clinics.ts            ← clínicas demo: plan=starter/growth/enterprise
     db.ts                      ← stub cliente Neon DB (no conectado)
   services/
+    ai/
+      provider.ts              ← IAIProvider + ClaudeProvider + RuleEngineProvider
+                                  getAIProvider() resuelve por ANTHROPIC_API_KEY
+      lead-qualifier.ts        ← qualifyLead(), qualifyLeadBatch() — reglas + Claude
+      campaign-advisor.ts      ← getCampaignSuggestions() — reglas estacionales + Claude
+      order-predictor.ts       ← predictOrders() — contexto paciente → tratamientos
+      retention-engine.ts      ← assessChurnRisk(), buildCRMReport() — churn + insights
+    whatsapp/
+      index.ts                 ← IWhatsAppService, MetaWhatsAppService, WA_TEMPLATES
+                                  getWhatsAppService() resuelve por WHATSAPP_TOKEN
+    automation/
+      rule-engine.ts           ← dispatchTrigger(), fireRule(), executeAction()
+      reminder-service.ts      ← scheduleAppointmentReminders(), dispatchDueReminders()
+    email/index.ts             ← IEmailService + MockEmailService + emailService
     stripe/index.ts            ← lazy Stripe client proxy (edge-safe)
     stripe/billing.ts          ← checkout, portal, changePlan, previewPlanChange
     stripe/webhooks.ts         ← verifySignature + 15 event handlers
@@ -122,6 +154,9 @@ src/                           ← Toda la lógica, tipos, config, stores, hooks
       validators.ts            ← Zod: course, lesson, quiz, enrollment, instructor
       course-store.ts          ← courses, sections, lessons, quizzes, instructors
       enrollment-store.ts      ← enrollments, progress, quiz attempts, certificates
+    automation/
+      automation-store.ts      ← rules, executions, reminders, tasks, waMessages
+      validators.ts            ← Zod: rule, reminder, whatsapp, task, qualify
     orders/
       service.ts               ← IOrderService interface
       repository.ts            ← IOrderRepository + IPickupRepository
@@ -262,6 +297,48 @@ AI Automation · Clinical Skills · Practice Management · Orthodontics
 - `campaign-store.ts` → campaigns, landing pages, funnels, social, reviews, referrals
 
 **Funnel submit** (`POST /funnels/:id/submit`) — endpoint público, crea lead automáticamente
+
+---
+
+## AI Automation Engine
+
+### Provider pattern — swap point
+```
+ANTHROPIC_API_KEY set    → ClaudeProvider (claude-sonnet-4-6, prompt caching)
+ANTHROPIC_API_KEY absent → RuleEngineProvider (deterministic, 0 tokens)
+```
+`getAIProvider()` en `src/services/ai/provider.ts` — usado por todos los engines.
+
+### Engines (reglas + Claude)
+| Engine | Archivo | Función |
+|--------|---------|---------|
+| Lead Qualifier | `ai/lead-qualifier.ts` | tier hot/warm/cold + flags + acciones |
+| Campaign Advisor | `ai/campaign-advisor.ts` | sugerencias estacionales + IA |
+| Order Predictor | `ai/order-predictor.ts` | tratamientos probables por paciente |
+| Retention Engine | `ai/retention-engine.ts` | churn risk + retención + CRM report |
+
+### Automation Rule Engine
+- `dispatchTrigger(clinicId, trigger, entityId, data)` — evalúa reglas activas
+- Condiciones: `eq/neq/gt/gte/lt/lte/contains/in/exists` (AND lógico)
+- Acciones: email · whatsapp · sms · create_task · update_lead · webhook · wait
+- Cooldown + max firings por entidad
+
+### WhatsApp
+- `WHATSAPP_TOKEN + WHATSAPP_PHONE_ID` → Meta Cloud API v19
+- Sin credenciales → MockWhatsAppService (log to console)
+- `WA_TEMPLATES.*` en `src/services/whatsapp/index.ts`
+- Webhook verification: `GET /api/v1/notifications/whatsapp?hub.mode=subscribe`
+
+### Agent Task Queue (`/api/v1/ai/tasks`)
+Preparado para arquitectura agéntica futura. Tasks `qualify_lead` y `suggest_campaigns` se ejecutan síncronamente inline. El resto queda en cola `status=queued` para un worker externo.
+
+### Env vars AI
+```
+ANTHROPIC_API_KEY          ← activa Claude para todos los engines
+WHATSAPP_TOKEN             ← Meta Cloud API token
+WHATSAPP_PHONE_ID          ← WhatsApp Business phone ID
+WHATSAPP_VERIFY_TOKEN      ← secret para verificación webhook Meta
+```
 
 ---
 
