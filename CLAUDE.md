@@ -64,6 +64,14 @@ app/                           ← Rutas Next.js únicamente (no lógica aquí)
       retention/risks          ← POST análisis churn por batch de pacientes
       crm/insights             ← GET report inteligencia CRM
       tasks                    ← GET/POST cola de tareas agénticas (futuro)
+    dashboard/
+      clinic                   ← GET ClinicDashboard (clinic_admin, doctor)
+      lab                      ← GET LabDashboard (lab_admin)
+      marketing                ← GET MarketingDashboard (clinic_admin)
+      finance                  ← GET FinanceDashboard (clinic_admin, lab_admin)
+      executive                ← GET ExecutiveReport (super_admin)
+      role                     ← GET auto-selecciona dashboard por session.role
+      kpis                     ← GET ?metrics=cac,ltv,mrr (picker flexible)
     notifications/
       whatsapp                 ← POST envío + GET webhook verificación Meta
       email                    ← POST email transaccional
@@ -106,6 +114,10 @@ src/                           ← Toda la lógica, tipos, config, stores, hooks
                                   WhatsAppMessage, AgentTask, IAIProvider,
                                   AILeadQualification, CampaignSuggestion,
                                   OrderPrediction, PatientChurnRisk, CRMIntelligenceReport
+    dashboard.ts               ← ClinicDashboard, LabDashboard, FinanceDashboard,
+                                  MarketingDashboard, ExecutiveReport, RoleDashboardType,
+                                  KPIValue, PeriodComparison, MRRBreakdown, CACKpi, LTVKpi,
+                                  ChurnKpi, ConversionFunnel, ProductionTimeKpi
     academy.ts                 ← Course, Lesson, CourseSection, Instructor, Quiz,
                                   CourseEnrollment, LessonProgress, Certificate,
                                   CourseReview, LiveSession, AcademyDashboardKPIs
@@ -134,6 +146,13 @@ src/                           ← Toda la lógica, tipos, config, stores, hooks
     automation/
       rule-engine.ts           ← dispatchTrigger(), fireRule(), executeAction()
       reminder-service.ts      ← scheduleAppointmentReminders(), dispatchDueReminders()
+    dashboard/
+      kpi-calculator.ts        ← funciones puras: CAC, LTV, MRR, ARR, churn, ROAS, NPS,
+                                  productionTime, conversionFunnel, compare(), toKPIValue()
+      clinic-dashboard.ts      ← getClinicDashboard(clinicId, name, plan, period)
+      lab-dashboard.ts         ← getLabDashboard(labId, name, plan, period)
+      finance-dashboard.ts     ← getFinanceDashboard(tenantId, type, period)
+      executive-report.ts      ← getExecutiveReport(period) — cross-tenant
     email/index.ts             ← IEmailService + MockEmailService + emailService
     stripe/index.ts            ← lazy Stripe client proxy (edge-safe)
     stripe/billing.ts          ← checkout, portal, changePlan, previewPlanChange
@@ -154,6 +173,9 @@ src/                           ← Toda la lógica, tipos, config, stores, hooks
       validators.ts            ← Zod: course, lesson, quiz, enrollment, instructor
       course-store.ts          ← courses, sections, lessons, quizzes, instructors
       enrollment-store.ts      ← enrollments, progress, quiz attempts, certificates
+    dashboard/
+      dashboard-store.ts       ← TTL cache 5min: getClinic/setClinic/getLab…
+                                  currentPeriod(), previousPeriod(), periodToRange()
     automation/
       automation-store.ts      ← rules, executions, reminders, tasks, waMessages
       validators.ts            ← Zod: rule, reminder, whatsapp, task, qualify
@@ -297,6 +319,30 @@ AI Automation · Clinical Skills · Practice Management · Orthodontics
 - `campaign-store.ts` → campaigns, landing pages, funnels, social, reviews, referrals
 
 **Funnel submit** (`POST /funnels/:id/submit`) — endpoint público, crea lead automáticamente
+
+---
+
+## Dashboard & BI Layer
+
+### Endpoints
+| Ruta | Rol | Datos |
+|------|-----|-------|
+| `GET /dashboard/role` | todos | auto-selecciona por session.role |
+| `GET /dashboard/clinic` | clinic_admin, doctor | orders, leads, revenue, automation, academy |
+| `GET /dashboard/lab` | lab_admin | pipeline, producción, quality, revenue por cliente |
+| `GET /dashboard/marketing` | clinic_admin | CAC, funnel, campañas, social, reviews |
+| `GET /dashboard/finance` | clinic_admin, lab_admin | MRR, ARR, LTV, CAC, churn, tokens |
+| `GET /dashboard/executive` | super_admin | platform MRR/ARR, tenant breakdown, growth |
+| `GET /dashboard/kpis?metrics=cac,ltv,mrr` | todos los admins | picker flexible de KPIs |
+
+### KPIs disponibles en `/dashboard/kpis`
+`cac` · `ltv` · `mrr` · `arr` · `churn` · `conversion` · `roas` · `orders` · `production_time` · `avg_ticket` · `outstanding_invoices` · `lead_score` · `patient_retention` · `on_time_delivery` · `revision_rate`
+
+### Arquitectura BI
+- `kpi-calculator.ts` — funciones puras, sin imports de stores (testeable)
+- `*-dashboard.ts` — llaman stores + calculator, retornan tipos tipados
+- TTL cache 5 min en `dashboard-store.ts` — `?refresh=true` fuerza recalculo
+- Period format: `'YYYY-MM'` — helper `currentPeriod()` para el mes en curso
 
 ---
 
