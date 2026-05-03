@@ -27,7 +27,7 @@ export default function LoginPage() {
         <LoginForm />
 
         <p className="mt-6 text-xs text-slate-400 text-center">
-          Demo: admin@orthonoba.app / admin123
+          Demo: admin@orthonoba.app · Admin@2024!
         </p>
       </div>
     </div>

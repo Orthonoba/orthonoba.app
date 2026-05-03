@@ -48,6 +48,21 @@ export async function deleteRule(id: string): Promise<boolean> {
   return rules.delete(id)
 }
 
+export async function listAllRules(): Promise<AutomationRule[]> {
+  return Array.from(rules.values())
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+}
+
+export async function listAllExecutions(
+  filters: { status?: string; limit?: number } = {}
+): Promise<AutomationExecution[]> {
+  let result = Array.from(executions.values())
+  if (filters.status) result = result.filter((e) => e.status === filters.status)
+  return result
+    .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
+    .slice(0, filters.limit ?? 100)
+}
+
 export async function getRulesByTrigger(
   clinicId: string,
   triggerType: AutomationRule['trigger']

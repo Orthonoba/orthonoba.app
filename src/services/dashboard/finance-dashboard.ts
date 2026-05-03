@@ -1,6 +1,7 @@
 import type { FinanceDashboard } from '@/src/types/dashboard'
 import type { TenantType } from '@/src/types/clinic'
 import { getSubscriptionByTenantId } from '@/src/modules/billing/subscription-store'
+import { getClinicById } from '@/src/lib/mock-clinics'
 import { getMarketingKPIs, listCampaigns } from '@/src/modules/marketing/campaign-store'
 import { listLeads } from '@/src/modules/marketing/lead-store'
 import { getPlan, TOKEN_ALLOCATIONS, PLANS } from '@/src/config/plans'
@@ -22,7 +23,7 @@ export async function getFinanceDashboard(
     listLeads(tenantId, { limit: 1000 }),
   ])
 
-  const planTier = subscription?.plan ?? 'starter'
+  const planTier = subscription?.plan ?? getClinicById(tenantId)?.plan ?? 'starter'
   const planConfig = getPlan(planTier)
 
   // MRR from subscription

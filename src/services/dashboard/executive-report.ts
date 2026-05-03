@@ -1,21 +1,22 @@
 import type { ExecutiveReport, PlatformTenantSummary } from '@/src/types/dashboard'
 import { listSubscriptions } from '@/src/modules/billing/subscription-store'
-import { listRules, listExecutions } from '@/src/modules/automation/automation-store'
+import { listAllRules, listAllExecutions } from '@/src/modules/automation/automation-store'
 import { listCourses } from '@/src/modules/academy/course-store'
 import { listCourseStudents } from '@/src/modules/academy/enrollment-store'
 import { calculateMRR, compare } from './kpi-calculator'
 import { getPlan, PLANS } from '@/src/config/plans'
 import type { PlanTier } from '@/src/types/clinic'
 import { isAIEnabled } from '@/src/services/ai/provider'
+import { getClinicById } from '@/src/lib/mock-clinics'
 
 export async function getExecutiveReport(period: string): Promise<ExecutiveReport> {
   const now = new Date().toISOString()
   const periodStart = `${period}-01`
 
-  const [subsResult, rules, executions, coursesResult] = await Promise.all([
+  const [subsResult, allRules, allExecutions, coursesResult] = await Promise.all([
     listSubscriptions(1000),
-    listRules('__platform__'),   // super_admin — no clinicId filter needed
-    listExecutions('__platform__', { limit: 1000 }),
+    listAllRules(),
+    listAllExecutions({ limit: 1000 }),
     listCourses({ status: 'published', limit: 1000 }),
   ])
 
@@ -55,7 +56,7 @@ export async function getExecutiveReport(period: string): Promise<ExecutiveRepor
       const mrrCents = sub.billingCycle === 'annual' ? plan.pricing.annual / 12 : plan.pricing.monthly
       return {
         tenantId:    sub.tenantId,
-        tenantName:  sub.tenantId,   // TODO: resolve from IClinicRepository
+        tenantName:  getClinicById(sub.tenantId)?.name ?? sub.tenantId,
         tenantType:  sub.tenantType,
         plan:        sub.plan,
         status:      sub.status,
@@ -80,8 +81,7 @@ export async function getExecutiveReport(period: string): Promise<ExecutiveRepor
   }
 
   // Automation health
-  const allRules    = Array.from({ length: 0 })  // TODO: platform-wide rules query
-  const periodExecs = executions.filter((e) => e.startedAt >= periodStart)
+  const periodExecs = allExecutions.filter((e) => e.startedAt >= periodStart)
   const successRate = periodExecs.length > 0
     ? periodExecs.filter((e) => e.status === 'completed').length / periodExecs.length
     : 1
@@ -128,7 +128,7 @@ export async function getExecutiveReport(period: string): Promise<ExecutiveRepor
     },
 
     platform_health: {
-      totalAutomationRules: 0,
+      totalAutomationRules: allRules.length,
       executionsThisPeriod: periodExecs.length,
       automationSuccessRate: successRate,
       aiEnabled: isAIEnabled(),

@@ -2,12 +2,14 @@ import type {
   AutomationRule, AutomationExecution, AutomationAction,
   ExecutionActionLog, ExecutionStatus,
 } from '@/src/types/automation'
+import type { LeadStatus } from '@/src/types/marketing'
 import { emailService } from '@/src/services/email/index'
 import { getWhatsAppService } from '@/src/services/whatsapp/index'
 import {
   getRule, saveExecution, incrementRuleFiring,
-  getRulesByTrigger,
+  getRulesByTrigger, saveReminder, enqueueTask,
 } from '@/src/modules/automation/automation-store'
+import { getLead, updateLead, addLeadActivity } from '@/src/modules/marketing/lead-store'
 
 // ─── Condition evaluator ──────────────────────────────────────────────────────
 
@@ -93,29 +95,143 @@ async function executeAction(
         break
       }
 
-      case 'create_task':
-      case 'create_reminder': {
-        // TODO: wire to task/reminder store
-        console.info('[automation:task] Creating task:', {
-          title: action.config.title,
-          dueInMinutes: action.config.dueInMinutes,
-          assignTo: action.config.assignTo,
+      case 'create_task': {
+        const clinicId = String(context.clinicId ?? '')
+        await enqueueTask({
+          clinicId,
+          type: 'qualify_lead',
+          priority: action.config.priority ?? 'normal',
+          input: {
+            title: action.config.title,
+            assignTo: action.config.assignTo,
+            dueInMinutes: action.config.dueInMinutes,
+            entityId: context.entityId,
+            entityType: context.entityType,
+          },
+          scheduledAt: new Date().toISOString(),
+          maxAttempts: 3,
         })
         log.status = 'completed'
         log.result = { taskCreated: true }
         break
       }
 
+      case 'create_reminder': {
+        const clinicId = String(context.clinicId ?? '')
+        const entityId = String(context.entityId ?? '')
+        const dueMs = (action.config.dueInMinutes ?? 60) * 60_000
+        await saveReminder({
+          clinicId,
+          entityId,
+          entityType: 'lead',
+          type: 'lead_follow_up',
+          channels: ['in_app'],
+          scheduledAt: new Date(Date.now() + dueMs).toISOString(),
+          status: 'scheduled',
+          message: action.config.title ?? 'Recordatorio automático',
+          aiGenerated: false,
+          createdAt: new Date().toISOString(),
+        })
+        log.status = 'completed'
+        log.result = { reminderCreated: true }
+        break
+      }
+
       case 'update_lead_status': {
-        // TODO: wire to lead store
-        console.info('[automation:lead] Update status:', { newStatus: action.config.newStatus, entityId: context.entityId })
+        const clinicId = String(context.clinicId ?? '')
+        const leadId   = String(context.entityId ?? '')
+        if (leadId && action.config.newStatus) {
+          await updateLead(clinicId, leadId, { status: action.config.newStatus as LeadStatus })
+          await addLeadActivity({
+            leadId, clinicId,
+            type: 'status_changed',
+            description: `Estado actualizado a "${action.config.newStatus}" por automatización`,
+            metadata: { ruleAction: action.type },
+            occurredAt: new Date().toISOString(),
+          })
+        }
+        log.status = 'completed'
+        break
+      }
+
+      case 'update_lead_score': {
+        const clinicId = String(context.clinicId ?? '')
+        const leadId   = String(context.entityId ?? '')
+        if (leadId && action.config.scoreAdjustment !== undefined) {
+          const lead = await getLead(clinicId, leadId)
+          if (lead) {
+            const newScore = Math.min(100, Math.max(0, (lead.score ?? 0) + action.config.scoreAdjustment))
+            await updateLead(clinicId, leadId, { score: newScore })
+          }
+        }
+        log.status = 'completed'
+        break
+      }
+
+      case 'assign_lead': {
+        const clinicId = String(context.clinicId ?? '')
+        const leadId   = String(context.entityId ?? '')
+        if (leadId && action.config.assigneeId) {
+          await updateLead(clinicId, leadId, { assignedTo: action.config.assigneeId })
+        }
+        log.status = 'completed'
+        break
+      }
+
+      case 'add_tag': {
+        const clinicId = String(context.clinicId ?? '')
+        const leadId   = String(context.entityId ?? '')
+        if (leadId && action.config.tag) {
+          await addLeadActivity({
+            leadId, clinicId,
+            type: 'note_added',
+            description: `Tag añadido: ${action.config.tag}`,
+            metadata: { tag: action.config.tag, action: 'add_tag' },
+            occurredAt: new Date().toISOString(),
+          })
+        }
+        log.status = 'completed'
+        break
+      }
+
+      case 'remove_tag': {
+        const clinicId = String(context.clinicId ?? '')
+        const leadId   = String(context.entityId ?? '')
+        if (leadId && action.config.tag) {
+          await addLeadActivity({
+            leadId, clinicId,
+            type: 'note_added',
+            description: `Tag eliminado: ${action.config.tag}`,
+            metadata: { tag: action.config.tag, action: 'remove_tag' },
+            occurredAt: new Date().toISOString(),
+          })
+        }
+        log.status = 'completed'
+        break
+      }
+
+      case 'add_to_campaign': {
+        const clinicId = String(context.clinicId ?? '')
+        const leadId   = String(context.entityId ?? '')
+        if (leadId && action.config.campaignId) {
+          await updateLead(clinicId, leadId, { campaignId: action.config.campaignId })
+        }
+        log.status = 'completed'
+        break
+      }
+
+      case 'remove_from_campaign': {
+        const clinicId = String(context.clinicId ?? '')
+        const leadId   = String(context.entityId ?? '')
+        if (leadId) {
+          await updateLead(clinicId, leadId, { campaignId: undefined })
+        }
         log.status = 'completed'
         break
       }
 
       case 'notify_staff': {
-        // TODO: push notification to staff
-        console.info('[automation:notify] Staff notification:', action.config)
+        console.info('[automation:notify] Staff notification (push not yet wired):', action.config)
         log.status = 'completed'
         break
       }
@@ -189,7 +305,7 @@ export async function fireRule(
         break
       }
 
-      const log = await executeAction(action, triggerData)
+      const log = await executeAction(action, { ...triggerData, clinicId: rule.clinicId })
       actionLogs.push(log)
 
       if (log.status === 'failed') {
