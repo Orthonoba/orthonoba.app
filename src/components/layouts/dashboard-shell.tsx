@@ -1,14 +1,13 @@
 'use client'
-import { useUIStore } from '@/src/store/ui-store'
+import type { ReactNode } from 'react'
 import { Sidebar } from '@/src/components/sidebar/sidebar'
 
 interface DashboardShellProps {
-  children: React.ReactNode
-  header?: React.ReactNode
+  children: ReactNode
+  header?: ReactNode
 }
 
 export function DashboardShell({ children, header }: DashboardShellProps) {
-  const open = useUIStore((s) => s.sidebarOpen)
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
