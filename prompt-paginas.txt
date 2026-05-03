@@ -1,0 +1,387 @@
+Eres un desarrollador senior Next.js 14 App Router con TypeScript y Tailwind CSS.
+
+Tu misión: crear las 43 páginas faltantes de orthonoba.app, una plataforma SaaS clínica dental PREMIUM. Diseño dark mode profesional, moderno, técnicamente superior. Es un software que combina: CRM clínico + Academia online + Marketing automation + IA + Billing con Stripe.
+
+STACK: Next.js 14 App Router, TypeScript, Tailwind CSS, shadcn/ui, Recharts, Lucide React, Framer Motion, TanStack Table, React Hook Form + Zod, Sonner toasts, Zustand.
+
+DISEÑO GLOBAL:
+- Dark mode obligatorio
+- Colores: bg-slate-900, surface bg-slate-800, border border-slate-700
+- Primary: sky-500, Success: emerald-500, Warning: amber-500, Danger: red-500
+- Fuente: Geist Sans
+- Todos los componentes con animaciones suaves (framer-motion o transition)
+- Cada página: loading.tsx + error.tsx propios
+- Datos mock realistas en español (nombres dentales reales)
+
+CREA EN ESTE ORDEN EXACTO:
+
+━━━━━━━━━━━━━━━━━
+BLOQUE 1 - LAYOUT BASE (crear primero, todo depende de esto)
+━━━━━━━━━━━━━━━━━
+
+1. src/app/(dashboard)/layout.tsx
+   - Sidebar fijo izquierda 260px
+   - Logo "Orthonoba" con ícono diente arriba
+   - Grupos navegación colapsables:
+     [Principal] Dashboard
+     [Clínica] Clínicas, Pacientes, Casos, Doctores
+     [Laboratorio] Órdenes, Labs
+     [Academia] Cursos
+     [Automatización] Automatización
+     [Crecimiento] Marketing, IA
+     [Finanzas] Billing
+     [Sistema] Admin, Settings
+   - Badge de notificaciones en items relevantes
+   - Avatar + nombre usuario en footer del sidebar
+   - Topbar: breadcrumb dinámico + buscador (Cmd+K) + campana notificaciones + avatar menú
+   - Responsive: sidebar se convierte en drawer en móvil (Sheet de shadcn)
+   - Ruta activa: highlight con sky-500
+
+2. src/app/(auth)/layout.tsx
+   - Fondo: gradient mesh animado dark
+   - Card centrada con glassmorphism
+   - Logo arriba
+
+━━━━━━━━━━━━━━━━━
+BLOQUE 2 - AUTH
+━━━━━━━━━━━━━━━━━
+
+3. src/app/(auth)/register/page.tsx
+   - Wizard 3 steps con Progress bar
+   - Step 1: nombre, email, password, confirmar password
+   - Step 2: nombre clínica, país, teléfono, tipo (clínica/laboratorio/academia)
+   - Step 3: elegir plan (Starter/Pro/Enterprise) con cards comparativas
+   - Validación Zod en cada step
+   - Animación slide entre steps
+
+4. src/app/(auth)/forgot-password/page.tsx
+   - Input email
+   - Botón enviar enlace
+   - Estado de confirmación con animación checkmark
+
+5. src/app/(auth)/verify/page.tsx
+   - Input 6 dígitos OTP (cajas individuales)
+   - Contador regresivo para reenviar
+   - Auto-submit al completar
+
+━━━━━━━━━━━━━━━━━
+BLOQUE 3 - CLÍNICAS
+━━━━━━━━━━━━━━━━━
+
+6. src/app/(dashboard)/clinics/page.tsx
+   - PageHeader: título "Clínicas" + botón "Nueva clínica" (sky-500)
+   - Filtros: búsqueda, estado (todas/activa/inactiva), ciudad
+   - Grid 3 columnas de ClinicCards
+   - Cada card: logo placeholder, nombre, ciudad, nº pacientes, nº casos activos, badge estado, botón ver detalle
+   - Mock: 6 clínicas con nombres reales (Clínica Dental Norte, OrthoSmile, etc.)
+   - Empty state con ilustración si no hay clínicas
+
+7. src/app/(dashboard)/clinics/new/page.tsx
+   - Wizard 3 steps:
+   - Step 1: nombre, RUT/NIF, dirección, ciudad, país, teléfono, email
+   - Step 2: logo upload (drag & drop), color primario picker, horarios de atención
+   - Step 3: invitar usuarios (email + rol: admin/dentista/técnico)
+   - Preview de la card resultante en tiempo real (lado derecho)
+
+8. src/app/(dashboard)/clinics/[id]/page.tsx
+   - Header: nombre clínica grande + badge activa + botones editar/archivar
+   - Stats row: pacientes totales, casos activos, casos completados, ingresos mes
+   - Tabs: Resumen | Pacientes | Casos | Estadísticas | Configuración
+   - Tab Resumen: info general + mapa placeholder + equipo
+   - Tab Estadísticas: LineChart casos por mes + BarChart tipos de caso
+
+9. src/app/(dashboard)/clinics/[id]/cases/page.tsx
+   - Kanban board: columnas Nuevo / En Diseño / En Producción / Completado
+   - Cards arrastrables con nombre paciente, tipo caso, prioridad badge, fecha
+
+10. src/app/(dashboard)/clinics/[id]/patients/page.tsx
+    - Tabla TanStack: nombre, edad, teléfono, casos activos, última visita, acciones
+    - Búsqueda en tiempo real
+    - Botón exportar CSV
+
+11. src/app/(dashboard)/clinics/[id]/settings/page.tsx
+    - Formulario edición clínica con todos los campos
+    - Sección danger zone: archivar clínica (confirmar con Dialog)
+
+━━━━━━━━━━━━━━━━━
+BLOQUE 4 - CASOS
+━━━━━━━━━━━━━━━━━
+
+12. src/app/(dashboard)/cases/page.tsx
+    - Toggle vista: Tabla | Kanban (guardar preferencia en localStorage)
+    - Filtros avanzados: clínica, estado, tipo, prioridad, rango fechas
+    - Tabla: ID, paciente, clínica, tipo, estado badge, prioridad, fecha, acciones
+    - Tipos de caso: Protector Bucal / Retenedor Essix / Ortodoncia / Prótesis / Otro
+    - Mock: 12 casos con datos reales
+
+13. src/app/(dashboard)/cases/new/page.tsx
+    - Wizard 5 steps:
+    - Step 1: buscar/seleccionar paciente (buscador + "Crear nuevo" inline)
+    - Step 2: tipo de caso (grid de cards con íconos)
+    - Step 3: especificaciones técnicas (campos dinámicos según tipo)
+    - Step 4: subir archivos (dropzone STL, imágenes, radiografías)
+    - Step 5: prioridad, fecha estimada, dentista asignado, notas
+
+14. src/app/(dashboard)/cases/[id]/page.tsx
+    - Header: ID caso + nombre paciente + estado badge grande + timeline horizontal de estados
+    - Tabs: Resumen | Archivos | Notas | Producción
+    - Tab Resumen: info completa del caso, paciente card, clínica card
+    - Botones: cambiar estado, editar, imprimir, eliminar
+
+15. src/app/(dashboard)/cases/[id]/files/page.tsx
+    - Dropzone grande para subir STL/imágenes
+    - Grid archivos: preview imagen, nombre, tamaño, fecha subida
+    - Para STL: badge "3D" con botón "Ver en visor"
+    - Acciones: descargar, eliminar, compartir
+
+16. src/app/(dashboard)/cases/[id]/notes/page.tsx
+    - Editor de texto enriquecido (textarea estilizada)
+    - Timeline de notas anteriores con autor y fecha
+    - Botón añadir nota
+    - Filtro por autor
+
+━━━━━━━━━━━━━━━━━
+BLOQUE 5 - PACIENTES
+━━━━━━━━━━━━━━━━━
+
+17. src/app/(dashboard)/patients/page.tsx
+    - Tabla completa TanStack
+    - Columnas: avatar+nombre, DNI, clínica, teléfono, casos activos, última visita
+    - Búsqueda, filtro por clínica
+    - Importar CSV + Exportar CSV
+    - Mock: 15 pacientes con nombres reales
+
+18. src/app/(dashboard)/patients/new/page.tsx
+    - Formulario en 2 columnas:
+    - Izquierda: datos personales (nombre, apellido, DNI/RUT, nacimiento, género)
+    - Derecha: contacto (teléfono, email, dirección) + médico (alergias, medicamentos)
+    - Footer: asignar a clínica + dentista responsable
+
+19. src/app/(dashboard)/patients/[id]/page.tsx
+    - Header: avatar grande, nombre, edad, clínica asignada
+    - Cards stats: total casos, activos, completados, próxima cita
+    - Tabs: Historial | Casos | Documentos | Notas
+    - Tab Historial: timeline vertical de eventos clínicos
+    - Botón flotante: "Nuevo caso"
+
+━━━━━━━━━━━━━━━━━
+BLOQUE 6 - DOCTORES
+━━━━━━━━━━━━━━━━━
+
+20. src/app/(dashboard)/doctors/page.tsx
+    - Grid de cards: foto avatar, nombre, especialidad, clínica, casos activos
+    - Filtro por clínica y especialidad
+    - Mock: 8 doctores
+
+21. src/app/(dashboard)/doctors/[id]/page.tsx
+    - Perfil completo del doctor
+    - Stats: casos totales, pacientes, calificación promedio
+    - Calendario de disponibilidad visual
+    - Lista de casos asignados
+
+━━━━━━━━━━━━━━━━━
+BLOQUE 7 - ÓRDENES Y LABS
+━━━━━━━━━━━━━━━━━
+
+22. src/app/(dashboard)/orders/page.tsx
+    - Tabla órdenes de laboratorio
+    - Columnas: nº orden, clínica, tipo, laboratorio, estado, fecha entrega, tracking
+    - Estados: pendiente/en proceso/enviado/entregado con colores
+    - Filtros por estado y fecha
+
+23. src/app/(dashboard)/orders/[id]/page.tsx
+    - Detalle completo de orden
+    - Timeline de producción con checkboxes
+    - Info de envío + número de guía
+    - Materiales utilizados
+
+24. src/app/(dashboard)/labs/page.tsx
+    - Grid de laboratorios: nombre, ciudad, especialidades, órdenes activas
+    - Rating con estrellas
+    - Botón "Nueva orden" en cada card
+
+25. src/app/(dashboard)/labs/[id]/page.tsx
+    - Perfil laboratorio: info, especialidades, tiempos promedio
+    - Historial de órdenes con este lab
+    - Estadísticas de calidad
+
+━━━━━━━━━━━━━━━━━
+BLOQUE 8 - ACADEMIA (cursos)
+━━━━━━━━━━━━━━━━━
+
+26. src/app/(dashboard)/courses/page.tsx
+    - Hero: "Academia Orthonoba" con badge Beta
+    - Grid de cursos: thumbnail, título, instructor, duración, estudiantes, progreso si inscrito
+    - Filtros: categoría, nivel, precio
+    - Mock: 6 cursos (Ortodoncia Digital, Diseño CAD Dental, etc.)
+
+27. src/app/(dashboard)/courses/new/page.tsx
+    - Solo visible para rol instructor/admin
+    - Formulario: título, descripción, categoría, nivel, precio
+    - Sección módulos: añadir secciones y lecciones con drag & drop
+    - Upload thumbnail
+
+28. src/app/(dashboard)/courses/[id]/page.tsx
+    - Página detalle curso: thumbnail grande, descripción, instructor
+    - Sidebar: temario + botón inscribirse/continuar
+    - Tabs: Contenido | Estudiantes | Analytics | Configuración
+
+29. src/app/(dashboard)/courses/[id]/lessons/[lessonId]/page.tsx
+    - Video player placeholder (iframe YouTube/Vimeo)
+    - Sidebar: lista de lecciones con progreso checkmarks
+    - Área recursos descargables
+    - Notas del estudiante
+    - Botones: anterior/siguiente lección
+
+30. src/app/(dashboard)/courses/[id]/students/page.tsx
+    - Tabla estudiantes inscritos
+    - Columnas: avatar+nombre, progreso barra, última actividad, certificado
+    - Exportar lista
+
+━━━━━━━━━━━━━━━━━
+BLOQUE 9 - AUTOMATIZACIÓN
+━━━━━━━━━━━━━━━━━
+
+31. src/app/(dashboard)/automation/page.tsx
+    - Grid de tipos: Recordatorios / Emails / WhatsApp / Reglas personalizadas
+    - Cada card: ícono grande, nº activos, toggle on/off, botón configurar
+    - Log de últimas ejecuciones (tabla compacta)
+    - Stats: mensajes enviados hoy, tasa éxito
+
+32. src/app/(dashboard)/automation/rules/page.tsx
+    - Lista de reglas: nombre, trigger, acción, estado, última ejecución
+    - Botón "Nueva regla"
+    - Editor visual de regla: SI [trigger] ENTONCES [acción]
+
+33. src/app/(dashboard)/automation/reminders/page.tsx
+    - Calendario de recordatorios programados
+    - Lista: paciente, tipo recordatorio, fecha, canal (email/whatsapp/sms)
+    - Toggle activar/desactivar cada uno
+
+━━━━━━━━━━━━━━━━━
+BLOQUE 10 - MARKETING
+━━━━━━━━━━━━━━━━━
+
+34. src/app/(dashboard)/marketing/leads/page.tsx
+    - Kanban CRM: Nuevo / Contactado / Interesado / Propuesta / Ganado / Perdido
+    - Card lead: nombre, clínica interesada, fuente, fecha, valor potencial
+
+35. src/app/(dashboard)/marketing/campaigns/page.tsx
+    - Tabla campañas: nombre, canal, estado, enviados, abiertos, conversión
+    - Botón nueva campaña
+    - Gráfica de rendimiento
+
+36. src/app/(dashboard)/marketing/funnels/page.tsx
+    - Visualización funnel con % en cada etapa
+    - PieChart por fuente de leads
+    - Tabla de conversión por mes
+
+37. src/app/(dashboard)/marketing/analytics/page.tsx
+    - Dashboard métricas: visitas, leads, conversiones, CAC, LTV, ROI
+    - LineChart tráfico últimos 30 días
+    - BarChart por canal (Google/Meta/Referral/Directo)
+    - Top landing pages tabla
+
+━━━━━━━━━━━━━━━━━
+BLOQUE 11 - IA (diferenciador clave)
+━━━━━━━━━━━━━━━━━
+
+38. src/app/(dashboard)/ai/page.tsx
+    - Header: "Centro de Inteligencia Artificial" + badge "Beta"
+    - Grid 4 módulos IA:
+      🎯 Calificación de Leads (conecta /api/v1/ai/leads/qualify)
+      📊 Insights CRM (conecta /api/v1/ai/crm/insights)
+      🔮 Predicción de Órdenes (conecta /api/v1/ai/orders/predict)
+      ⚠️ Riesgo de Retención (conecta /api/v1/ai/retention/risks)
+    - Cada módulo: descripción, última ejecución, botón "Ejecutar análisis"
+    - Panel de resultados: tabla con scores y recomendaciones
+    - Disclaimer "IA como herramienta de apoyo, no diagnóstico"
+
+━━━━━━━━━━━━━━━━━
+BLOQUE 12 - BILLING
+━━━━━━━━━━━━━━━━━
+
+39. src/app/(dashboard)/billing/page.tsx
+    - Card plan actual: nombre plan, precio, próximo cobro, botón "Gestionar"
+    - Stats: facturas totales, próximo pago, descuento activo
+    - Tabs: Suscripción | Facturas | Historial pagos
+
+40. src/app/(dashboard)/billing/invoices/page.tsx
+    - Tabla facturas: número, fecha, monto, estado, PDF descarga
+    - Filtro por rango de fechas
+    - Total acumulado en footer
+
+41. src/app/(dashboard)/billing/plans/page.tsx
+    - 3 cards: Starter / Pro / Enterprise
+    - Cada una: precio, lista de features con checkmarks
+    - Card Pro destacada con badge "Más popular"
+    - Botón "Actualizar" en cada plan
+    - Toggle mensual/anual con descuento 20%
+
+━━━━━━━━━━━━━━━━━
+BLOQUE 13 - ADMIN
+━━━━━━━━━━━━━━━━━
+
+42. src/app/(dashboard)/admin/users/page.tsx
+    - Tabla usuarios: avatar+nombre, email, rol badge, clínica, estado, último acceso
+    - Acciones bulk: desactivar, cambiar rol, eliminar
+    - Botón "Invitar usuario"
+    - Filtro por rol y estado
+
+43. src/app/(dashboard)/admin/roles/page.tsx
+    - Matriz de permisos: filas=módulos, columnas=roles
+    - Checkboxes: ver / crear / editar / eliminar
+    - Roles: Super Admin / Admin / Dentista / Técnico / Viewer
+    - Botón guardar cambios
+
+━━━━━━━━━━━━━━━━━
+BLOQUE 14 - SETTINGS
+━━━━━━━━━━━━━━━━━
+
+44. src/app/(dashboard)/settings/page.tsx
+    - Layout con sidebar secundario izquierdo (links a sub-páginas)
+    - Página principal: resumen de cuenta
+
+45. src/app/(dashboard)/settings/profile/page.tsx
+    - Upload avatar con preview
+    - Formulario: nombre, apellido, email, teléfono, cargo, bio
+    - Selector idioma y zona horaria
+
+46. src/app/(dashboard)/settings/security/page.tsx
+    - Cambio de contraseña (3 inputs: actual, nueva, confirmar)
+    - Sección 2FA: activar con QR code placeholder
+    - Sesiones activas con botón cerrar sesión remota
+
+47. src/app/(dashboard)/settings/api-keys/page.tsx
+    - Lista de API keys: nombre, prefijo, permisos, creada, último uso
+    - Botón "Generar nueva key"
+    - Dialog: nombre key + selección permisos
+    - Botón revocar con confirmación
+
+━━━━━━━━━━━━━━━━━
+REGLAS GLOBALES PARA TODAS LAS PÁGINAS
+━━━━━━━━━━━━━━━━━
+
+- NUNCA uses Lorem ipsum — datos dentales reales en español
+- SIEMPRE incluir loading.tsx (skeleton) y error.tsx por página
+- Animaciones con framer-motion en page load (fadeInUp con stagger)
+- Toasts con Sonner para todas las acciones (crear, editar, eliminar)
+- Dialog de confirmación antes de eliminar cualquier cosa
+- Responsive en todas las páginas (mobile-first)
+- 'use client' solo cuando hay interactividad
+- Server Components por defecto para páginas de solo lectura
+- Importar componentes de @/components/ui (shadcn ya instalado)
+- Sidebar se mantiene igual en todas las páginas (viene del layout)
+
+━━━━━━━━━━━━━━━━━
+EMPIEZA AHORA
+━━━━━━━━━━━━━━━━━
+
+Comienza por el BLOQUE 1. Crea cada archivo completo antes de pasar al siguiente.
+
+Confirma cada archivo completado con:
+✅ [nombre] → [siguiente archivo]
+
+Avanza de forma autónoma sin pedir confirmación. Si hay una decisión importante de diseño, tómala tú siguiendo las guías dadas. Comienza ya con src/app/(dashboard)/layout.tsx
+
+ 
