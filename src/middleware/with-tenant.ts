@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { decrypt } from '@/src/lib/session'
 import { getClinicById } from '@/src/lib/mock-clinics'
 import { fail, HTTP_STATUS } from '@/src/types/api'

@@ -1,5 +1,5 @@
 import type { PatientChurnRisk, ChurnRiskLevel, RetentionAction, CRMIntelligenceReport, AIInsight } from '@/src/types/automation'
-import type { Lead, MarketingDashboardKPIs } from '@/src/types/marketing'
+import type { MarketingDashboardKPIs } from '@/src/types/marketing'
 import { getAIProvider, isAIEnabled } from './provider'
 
 interface PatientRetentionContext {

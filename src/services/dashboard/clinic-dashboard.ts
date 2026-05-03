@@ -4,7 +4,7 @@ import { listLeads } from '@/src/modules/marketing/lead-store'
 import { getMarketingKPIs, listCampaigns } from '@/src/modules/marketing/campaign-store'
 import { listRules, listExecutions, listReminders } from '@/src/modules/automation/automation-store'
 import {
-  compare, calculateCAC, buildConversionFunnel, calculateProductionTime, toKPIValue,
+  compare, calculateCAC, buildConversionFunnel, calculateProductionTime,
 } from './kpi-calculator'
 import { isAIEnabled } from '@/src/services/ai/provider'
 
@@ -18,7 +18,7 @@ export async function getClinicDashboard(
 
   const [
     leadsResult,
-    marketingKPIs,
+    _marketingKPIs,
     campaigns,
     rules,
     executions,

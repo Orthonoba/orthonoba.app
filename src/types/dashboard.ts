@@ -1,5 +1,4 @@
 import type { PlanTier, TenantType } from '@/src/types/clinic'
-import type { UserRole } from '@/src/types/user'
 
 // ─── KPI primitives ───────────────────────────────────────────────────────────
 

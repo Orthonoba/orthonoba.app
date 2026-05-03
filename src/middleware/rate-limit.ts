@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { fail, HTTP_STATUS } from '@/src/types/api'
 
 // ─── In-memory rate limiter (dev/fallback) ────────────────────────────────────

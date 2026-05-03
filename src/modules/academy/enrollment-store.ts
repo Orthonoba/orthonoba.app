@@ -3,7 +3,6 @@ import type {
   QuizAttempt, Certificate, QuizAttemptAnswer,
   AcademyDashboardKPIs,
 } from '@/src/types/academy'
-import type { Quiz } from '@/src/types/academy'
 import { getCourse, getCourseWithFullContent, getQuizByLesson } from './course-store'
 import {
   canAccessCourse, getCertificateVerifyUrl, COMPLETION_THRESHOLD, DEFAULT_CERTIFICATE_TEMPLATE,
@@ -263,7 +262,7 @@ export async function submitQuizAttempt(
     const { getCourse: getCourseData } = await import('./course-store')
     const course = await getCourseData(quiz.courseId)
     if (course) {
-      const progress = await updateLessonProgress(enrollmentId, lessonId, quiz.courseId, userId, { percentComplete: 100 })
+      await updateLessonProgress(enrollmentId, lessonId, quiz.courseId, userId, { percentComplete: 100 })
       const updated = lessonProgress.get(enrollmentId) ?? []
       const idx = updated.findIndex((p) => p.lessonId === lessonId)
       if (idx >= 0) {

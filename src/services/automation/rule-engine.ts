@@ -6,7 +6,7 @@ import type { LeadStatus } from '@/src/types/marketing'
 import { emailService } from '@/src/services/email/index'
 import { getWhatsAppService } from '@/src/services/whatsapp/index'
 import {
-  getRule, saveExecution, incrementRuleFiring,
+  saveExecution, incrementRuleFiring,
   getRulesByTrigger, saveReminder, enqueueTask,
 } from '@/src/modules/automation/automation-store'
 import { getLead, updateLead, addLeadActivity } from '@/src/modules/marketing/lead-store'

@@ -1,4 +1,3 @@
-import type { WhatsAppMessage } from '@/src/types/automation'
 
 // ─── WhatsApp Business API adapter ───────────────────────────────────────────
 // Production: set WHATSAPP_TOKEN + WHATSAPP_PHONE_ID (Meta Cloud API)

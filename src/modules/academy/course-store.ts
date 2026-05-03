@@ -12,7 +12,7 @@ const lessons     = new Map<string, Lesson>()            // key = lessonId
 const quizzes     = new Map<string, Quiz>()              // key = lessonId
 const instructors = new Map<string, Instructor>()        // key = instructorId
 const reviews     = new Map<string, CourseReview[]>()    // key = courseId
-const liveSessions = new Map<string, LiveSession>()
+const _liveSessions = new Map<string, LiveSession>()
 
 // ─── Courses ──────────────────────────────────────────────────────────────────
 

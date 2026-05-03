@@ -4,9 +4,9 @@ import { getSubscriptionByTenantId } from '@/src/modules/billing/subscription-st
 import { getClinicById } from '@/src/lib/mock-clinics'
 import { getMarketingKPIs, listCampaigns } from '@/src/modules/marketing/campaign-store'
 import { listLeads } from '@/src/modules/marketing/lead-store'
-import { getPlan, TOKEN_ALLOCATIONS, PLANS } from '@/src/config/plans'
+import { getPlan, TOKEN_ALLOCATIONS } from '@/src/config/plans'
 import {
-  calculateCAC, calculateLTV, calculateChurn, calculateMRR, compare,
+  calculateCAC, calculateLTV, calculateChurn, calculateMRR,
 } from './kpi-calculator'
 
 export async function getFinanceDashboard(
@@ -16,7 +16,7 @@ export async function getFinanceDashboard(
 ): Promise<FinanceDashboard> {
   const now = new Date().toISOString()
 
-  const [subscription, marketingKPIs, campaigns, leadsResult] = await Promise.all([
+  const [subscription, _marketingKPIs, campaigns, leadsResult] = await Promise.all([
     getSubscriptionByTenantId(tenantId),
     getMarketingKPIs(tenantId, period),
     listCampaigns(tenantId),

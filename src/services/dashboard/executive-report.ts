@@ -4,7 +4,7 @@ import { listAllRules, listAllExecutions } from '@/src/modules/automation/automa
 import { listCourses } from '@/src/modules/academy/course-store'
 import { listCourseStudents } from '@/src/modules/academy/enrollment-store'
 import { calculateMRR, compare } from './kpi-calculator'
-import { getPlan, PLANS } from '@/src/config/plans'
+import { getPlan } from '@/src/config/plans'
 import type { PlanTier } from '@/src/types/clinic'
 import { isAIEnabled } from '@/src/services/ai/provider'
 import { getClinicById } from '@/src/lib/mock-clinics'

@@ -1,4 +1,4 @@
-import type { DentalTreatmentSlug, LandingPageTemplate, TemplateCategory } from '@/src/types/marketing'
+import type { DentalTreatmentSlug, LandingPageTemplate } from '@/src/types/marketing'
 
 // ─── Dental Treatment Catalog ─────────────────────────────────────────────────
 
