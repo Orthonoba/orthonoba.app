@@ -1,0 +1,62 @@
+# =============================================================================
+# ORTHONOBA — n8n Workflow Automation
+# =============================================================================
+# Usage:
+#   docker compose -f infra/n8n/docker-compose.n8n.yml up -d
+# Prerequisites:
+#   - orthonoba-net network must exist (created by docker-compose.yml)
+#   - postgres service must be running with n8n database created:
+#       docker exec orthonoba-postgres psql -U $POSTGRES_USER \
+#         -c "CREATE DATABASE n8n;"
+# Required env vars:
+#   N8N_ENCRYPTION_KEY, N8N_USER, N8N_PASSWORD,
+#   POSTGRES_USER, POSTGRES_PASSWORD
+# =============================================================================
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: orthonoba-n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=n8n.orthonoba.app
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://n8n.orthonoba.app/
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD}
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=336
+      - N8N_METRICS=true
+      - N8N_LOG_LEVEL=warn
+      - GENERIC_TIMEZONE=UTC
+    volumes:
+      - n8n_data:/home/node/.n8n
+      # Workflow files for version-controlled import
+      - ./workflows:/home/node/.n8n/workflows:ro
+    networks:
+      - orthonoba-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  n8n_data:
+    name: orthonoba_n8n_data
+
+networks:
+  orthonoba-net:
+    external: true
+    name: orthonoba-net

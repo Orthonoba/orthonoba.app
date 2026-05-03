@@ -1,0 +1,95 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --tag orthonoba-app:${{ github.sha }} \
+            --tag orthonoba-app:latest \
+            --build-arg NEXT_TELEMETRY_DISABLED=1 \
+            --file Dockerfile \
+            .
+
+      - name: Save image as tarball
+        run: docker save orthonoba-app:latest | gzip > /tmp/orthonoba-production.tar.gz
+
+      - name: Copy image to production server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: deploy
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: /tmp/orthonoba-production.tar.gz
+          target: /tmp/
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: deploy
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: GITHUB_SHA
+          script: |
+            set -euo pipefail
+
+            # Load the new image
+            docker load < /tmp/orthonoba-production.tar.gz
+            rm -f /tmp/orthonoba-production.tar.gz
+
+            cd /opt/orthonoba
+
+            # Tag with SHA for rollback capability
+            docker tag orthonoba-app:latest orthonoba-app:$GITHUB_SHA
+
+            # Pre-deploy database backup
+            echo "Running pre-deploy database backup..."
+            ./scripts/backup-db.sh || echo "Warning: backup failed — continuing deploy"
+
+            # Deploy
+            ./scripts/deploy.sh production
+
+      - name: External health check
+        run: |
+          sleep 10
+          curl -f https://app.orthonoba.app/api/health || exit 1
+          echo "Production health check passed"
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "Production deployment succeeded: ${{ github.sha }}"
+          # Wire in notification here:
+          # curl -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+          #   -H 'Content-type: application/json' \
+          #   --data "{\"text\":\"Production deployed successfully: ${{ github.sha }}\"}"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Production deployment FAILED: ${{ github.sha }}"
+          echo "To rollback manually, SSH to the server and run:"
+          echo "  cd /opt/orthonoba && ./scripts/rollback.sh"
+          # Wire in urgent notification here:
+          # curl -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+          #   -H 'Content-type: application/json' \
+          #   --data "{\"text\":\"CRITICAL: Production deploy FAILED for ${{ github.sha }}. Run rollback.sh\"}"

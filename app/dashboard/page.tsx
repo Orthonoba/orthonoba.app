@@ -46,7 +46,7 @@ function StatCard({
         {trend && pct !== undefined && (
           <span
             className={[
-              'text-xs font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0',
+              'text-xs font-semibold px-1.5 py-0.5 rounded-full shrink-0',
               trendUp   && 'bg-green-50 text-green-700',
               trendDown && 'bg-red-50 text-red-700',
               !trendUp && !trendDown && 'bg-slate-100 text-slate-500',
@@ -242,7 +242,7 @@ export default async function DashboardPage() {
             >
               <span
                 className={[
-                  'w-1.5 h-1.5 rounded-full flex-shrink-0',
+                  'w-1.5 h-1.5 rounded-full shrink-0',
                   aiOn ? 'bg-teal-500' : 'bg-slate-300',
                 ].join(' ')}
               />
@@ -302,21 +302,21 @@ export default async function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard label="Casos activos"        value={String(dash.production.activeCases)}  color="blue" />
-          <StatCard label="Completados"          value={String(dash.production.completedCases)} color="green" />
-          <StatCard label="On-time rate"         value={`${(dash.quality.onTimeDeliveryRate * 100).toFixed(0)}%`} color="teal" />
-          <StatCard label="Tasa de revisión"     value={`${(dash.quality.revisionRate * 100).toFixed(0)}%`} color="amber" />
+          <StatCard label="Casos activos"    value={String(dash.pipeline.totalActive)}                          color="blue"  />
+          <StatCard label="Vencidos"         value={String(dash.pipeline.overdueCount)}                         color="amber" />
+          <StatCard label="On-time rate"     value={`${(dash.production.onTimeRate * 100).toFixed(0)}%`}        color="teal"  />
+          <StatCard label="Tasa revisión"    value={`${(dash.production.revisionRate * 100).toFixed(0)}%`}      color="red"   />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <SectionTitle title="Producción" />
+            <SectionTitle title="Pipeline de Producción" />
             <dl className="space-y-3">
               {[
-                { label: 'Casos activos',      value: dash.production.activeCases },
-                { label: 'Completados',        value: dash.production.completedCases },
-                { label: 'Vencidos',           value: dash.production.overdueCases },
-                { label: 'Tiempo promedio',    value: `${dash.production.avgTurnaroundDays.toFixed(1)} días` },
+                { label: 'Casos activos',    value: dash.pipeline.totalActive },
+                { label: 'Vence esta semana',value: dash.pipeline.dueThisWeek },
+                { label: 'Vencidos',         value: dash.pipeline.overdueCount },
+                { label: 'Tiempo promedio',  value: `${dash.production.avgTurnaroundDays.toFixed(1)} días` },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between text-sm">
                   <dt className="text-slate-500">{label}</dt>
@@ -330,10 +330,10 @@ export default async function DashboardPage() {
             <SectionTitle title="Calidad" />
             <dl className="space-y-3">
               {[
-                { label: 'QC pass rate',        value: `${(dash.quality.qualityPassRate * 100).toFixed(0)}%` },
-                { label: 'On-time delivery',    value: `${(dash.quality.onTimeDeliveryRate * 100).toFixed(0)}%` },
-                { label: 'Revisiones',          value: `${(dash.quality.revisionRate * 100).toFixed(0)}%` },
-                { label: 'MRR',                 value: `€${(finance.mrr.mrr / 100).toFixed(0)}` },
+                { label: 'QC pass rate',     value: `${(dash.production.qualityPassRate * 100).toFixed(0)}%` },
+                { label: 'On-time delivery', value: `${(dash.production.onTimeRate * 100).toFixed(0)}%` },
+                { label: 'Revisiones',       value: `${(dash.quality.revisionRate * 100).toFixed(0)}%` },
+                { label: 'MRR',              value: `€${(finance.mrr.mrr / 100).toFixed(0)}` },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between text-sm">
                   <dt className="text-slate-500">{label}</dt>

@@ -23,7 +23,7 @@ export function DashboardShell({ children, header }: DashboardShellProps) {
         ].join(' ')}
       >
         {/* Top header bar */}
-        <header className="h-14 bg-white border-b border-slate-200 flex items-center px-4 gap-4 flex-shrink-0 sticky top-0 z-20">
+        <header className="h-14 bg-white border-b border-slate-200 flex items-center px-4 gap-4 shrink-0 sticky top-0 z-20">
           {header ?? (
             <div className="flex-1">
               <p className="text-sm font-semibold text-slate-900">Orthonoba</p>

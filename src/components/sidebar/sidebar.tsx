@@ -236,10 +236,10 @@ export function Sidebar() {
         ].join(' ')}
       >
         {/* Header */}
-        <div className="h-14 flex items-center justify-between px-4 border-b border-slate-100 flex-shrink-0">
+        <div className="h-14 flex items-center justify-between px-4 border-b border-slate-100 shrink-0">
           {open && (
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
                 <span className="text-white font-bold text-xs">O</span>
               </div>
               <span className="font-semibold text-slate-900 text-sm truncate">
@@ -249,7 +249,7 @@ export function Sidebar() {
           )}
           <button
             onClick={toggle}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex-shrink-0"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0"
             aria-label="Toggle sidebar"
           >
             {open ? Icons.chevronLeft : Icons.menu}
@@ -291,7 +291,7 @@ export function Sidebar() {
                         >
                           <span
                             className={[
-                              'flex-shrink-0',
+                              'shrink-0',
                               active ? 'text-blue-600' : 'text-slate-400',
                             ].join(' ')}
                           >
@@ -314,10 +314,10 @@ export function Sidebar() {
         </nav>
 
         {/* User footer */}
-        <div className="border-t border-slate-100 p-3 flex-shrink-0">
+        <div className="border-t border-slate-100 p-3 shrink-0">
           {open ? (
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
                 <span className="text-blue-700 font-semibold text-xs">{initials}</span>
               </div>
               <div className="flex-1 min-w-0">

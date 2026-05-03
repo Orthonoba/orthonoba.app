@@ -1,0 +1,530 @@
+// ─────────────────────────────────────────────────────────────
+// ORTHONOBA — Prisma Schema
+// Datasource: Neon DB / PostgreSQL
+// ─────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────
+
+enum TenantType {
+  clinic
+  lab
+}
+
+enum TenantStatus {
+  active
+  trial
+  suspended
+  cancelled
+}
+
+enum PlanTier {
+  starter
+  growth
+  scale
+  enterprise
+}
+
+enum UserRole {
+  super_admin
+  clinic_admin
+  lab_admin
+  doctor
+  staff
+  instructor
+}
+
+enum UserStatus {
+  active
+  inactive
+  suspended
+}
+
+enum Gender {
+  male
+  female
+  other
+}
+
+enum OrderStatus {
+  draft
+  pending
+  in_design
+  manufacturing
+  qc
+  ready
+  delivered
+  cancelled
+}
+
+enum OrderPriority {
+  normal
+  urgent
+  stat
+}
+
+enum LeadStatus {
+  new
+  contacted
+  qualified
+  appointment_scheduled
+  converted
+  nurturing
+  lost
+}
+
+enum CampaignStatus {
+  draft
+  active
+  paused
+  completed
+  archived
+}
+
+enum BillingCycle {
+  monthly
+  annual
+}
+
+enum AutomationRuleStatus {
+  active
+  paused
+  draft
+  archived
+}
+
+enum AutomationExecutionStatus {
+  pending
+  running
+  completed
+  failed
+  cancelled
+}
+
+enum CourseStatus {
+  draft
+  published
+  archived
+}
+
+// ─── Models ───────────────────────────────────────────────────
+
+/// Tenants — clinics and labs (multi-tenant root entity)
+model Tenant {
+  id         String       @id @default(cuid())
+  name       String
+  subdomain  String       @unique
+  type       TenantType
+  status     TenantStatus @default(trial)
+  plan       PlanTier     @default(starter)
+  email      String
+  phone      String?
+  address    String?
+  timezone   String       @default("Europe/Madrid")
+  currency   String       @default("EUR")
+  isActive   Boolean      @default(true)
+  settings   Json         @default("{}")
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  // Relations
+  users            User[]
+  orders           DentalOrder[]
+  leads            Lead[]
+  subscriptions    Subscription[]
+  automationRules  AutomationRule[]
+  scans            DentalScan[]
+  patients         Patient[]
+  campaigns        Campaign[]
+  executions       AutomationExecution[]
+  reminders        SmartReminder[]
+  enrollments      CourseEnrollment[]
+  certificates     Certificate[]
+
+  @@index([status])
+  @@index([plan])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+/// Platform users — one per tenant member
+model User {
+  id             String     @id @default(cuid())
+  tenantId       String
+  name           String
+  email          String     @unique
+  hashedPassword String
+  role           UserRole   @default(staff)
+  status         UserStatus @default(active)
+  phone          String?
+  avatarUrl      String?
+  lastLoginAt    DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  // Relations
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patientRecords Patient[]
+  assignedLeads  Lead[]           @relation("AssignedLeads")
+  uploadedScans  DentalScan[]
+  instructedCourses Course[]
+  enrollments    CourseEnrollment[]
+  certificates   Certificate[]
+
+  @@index([tenantId])
+  @@index([role])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// Patients — dental clinic patients
+model Patient {
+  id             String    @id @default(cuid())
+  tenantId       String
+  name           String
+  email          String?
+  phone          String?
+  birthDate      DateTime?
+  gender         Gender?
+  nationalId     String?
+  address        String?
+  medicalHistory Json      @default("{}")
+  allergies      String[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  doctor   User?         @relation(fields: [doctorId], references: [id])
+  doctorId String?
+  orders   DentalOrder[]
+  scans    DentalScan[]
+
+  @@index([tenantId])
+  @@index([email])
+  @@index([createdAt])
+}
+
+/// Dental orders — production orders sent to labs
+model DentalOrder {
+  id                  String        @id @default(cuid())
+  tenantId            String
+  patientId           String?
+  orderNumber         String        @unique
+  type                String
+  status              OrderStatus   @default(draft)
+  priority            OrderPriority @default(normal)
+  notes               String?
+  totalAmountEurCents Int           @default(0)
+  dueDate             DateTime?
+  deliveredAt         DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  // Relations
+  tenant  Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient Patient?    @relation(fields: [patientId], references: [id])
+  scans   DentalScan[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@index([createdAt])
+}
+
+/// 3D scan files attached to orders or patients
+model DentalScan {
+  id          String   @id @default(cuid())
+  tenantId    String
+  orderId     String?
+  patientId   String?
+  uploadedBy  String
+  fileName    String
+  fileType    String
+  sizeBytes   BigInt
+  storageUrl  String
+  storagePath String
+  jaw         String?
+  side        String?
+  scanType    String?
+  notes       String?
+  uploadedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  // Relations
+  tenant    Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  order     DentalOrder? @relation(fields: [orderId], references: [id])
+  patient   Patient?    @relation(fields: [patientId], references: [id])
+  uploader  User        @relation(fields: [uploadedBy], references: [id])
+
+  @@index([tenantId])
+  @@index([orderId])
+  @@index([patientId])
+  @@index([createdAt])
+}
+
+/// Marketing leads — prospective patients
+model Lead {
+  id                String     @id @default(cuid())
+  tenantId          String
+  name              String
+  email             String?
+  phone             String?
+  status            LeadStatus @default(new)
+  source            String
+  score             Int?
+  scoreGrade        String?
+  assignedTo        String?
+  campaignId        String?
+  estimatedValueEur Float?
+  convertedAt       DateTime?
+  lastContactedAt   DateTime?
+  notes             String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Relations
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assignee  User?     @relation("AssignedLeads", fields: [assignedTo], references: [id])
+  campaign  Campaign? @relation(fields: [campaignId], references: [id])
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([score])
+  @@index([assignedTo])
+  @@index([campaignId])
+  @@index([createdAt])
+}
+
+/// Marketing campaigns
+model Campaign {
+  id        String         @id @default(cuid())
+  tenantId  String
+  name      String
+  type      String
+  status    CampaignStatus @default(draft)
+  budget    Float?
+  channel   String?
+  startDate DateTime?
+  endDate   DateTime?
+  metrics   Json           @default("{}")
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leads  Lead[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+/// Stripe subscriptions — one per tenant
+model Subscription {
+  id                   String       @id @default(cuid())
+  stripeSubscriptionId String       @unique
+  tenantId             String
+  tenantType           String
+  plan                 String
+  billingCycle         BillingCycle @default(monthly)
+  status               String
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean      @default(false)
+  cancelledAt          DateTime?
+  trialEnd             DateTime?
+  stripeCustomerId     String
+  stripePriceId        String
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([stripeCustomerId])
+  @@index([createdAt])
+}
+
+/// Automation rules — trigger/condition/action definitions
+model AutomationRule {
+  id                  String               @id @default(cuid())
+  tenantId            String
+  name                String
+  description         String?
+  status              AutomationRuleStatus @default(draft)
+  trigger             String
+  conditions          Json                 @default("[]")
+  actions             Json                 @default("[]")
+  cronExpression      String?
+  maxFiringPerEntity  Int                  @default(1)
+  cooldownMinutes     Int                  @default(60)
+  totalFirings        Int                  @default(0)
+  lastFiredAt         DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  // Relations
+  tenant     Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  executions AutomationExecution[]
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([trigger])
+  @@index([createdAt])
+}
+
+/// Automation execution log — one record per rule firing
+model AutomationExecution {
+  id               String                    @id @default(cuid())
+  ruleId           String
+  tenantId         String
+  triggerType      String
+  triggerEntityId  String
+  triggerEntityType String
+  status           AutomationExecutionStatus @default(pending)
+  actionsExecuted  Json                      @default("[]")
+  errorMessage     String?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  durationMs       Int?
+  createdAt        DateTime                  @default(now())
+
+  // Relations
+  rule   AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  tenant Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([triggerEntityId])
+  @@index([createdAt])
+}
+
+/// Smart reminders — scheduled multi-channel notifications
+model SmartReminder {
+  id          String   @id @default(cuid())
+  tenantId    String
+  entityId    String
+  entityType  String
+  type        String
+  channels    String[]
+  status      String   @default("pending")
+  scheduledAt DateTime
+  sentAt      DateTime?
+  message     String
+  subject     String?
+  metadata    Json     @default("{}")
+  aiGenerated Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+/// Academy courses — Orthonoba LMS
+model Course {
+  id              String       @id @default(cuid())
+  instructorId    String?
+  title           String
+  slug            String       @unique
+  description     String
+  category        String
+  status          CourseStatus @default(draft)
+  accessLevel     String       @default("free")
+  pricingType     String       @default("free")
+  priceEurCents   Int?
+  thumbnailUrl    String?
+  totalLessons    Int          @default(0)
+  durationMinutes Int          @default(0)
+  enrollmentCount Int          @default(0)
+  completionRate  Float        @default(0)
+  avgRating       Float?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  instructor  User?             @relation(fields: [instructorId], references: [id])
+  enrollments CourseEnrollment[]
+  certificates Certificate[]
+
+  @@index([category])
+  @@index([status])
+  @@index([accessLevel])
+  @@index([instructorId])
+  @@index([createdAt])
+}
+
+/// Course enrollments — user ↔ course join with progress
+model CourseEnrollment {
+  id               String    @id @default(cuid())
+  courseId         String
+  userId           String
+  tenantId         String
+  status           String    @default("active")
+  progressPercent  Float     @default(0)
+  completedLessons Int       @default(0)
+  startedAt        DateTime  @default(now())
+  completedAt      DateTime?
+  certificateId    String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  certificate Certificate? @relation(fields: [certificateId], references: [id])
+
+  @@unique([courseId, userId])
+  @@index([userId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// Certificates — issued on course completion
+model Certificate {
+  id             String    @id @default(cuid())
+  verificationId String    @unique @default(cuid())
+  courseId       String
+  userId         String
+  tenantId       String
+  userName       String
+  courseName     String
+  issuedAt       DateTime  @default(now())
+  expiresAt      DateTime?
+  metadata       Json      @default("{}")
+  createdAt      DateTime  @default(now())
+
+  // Relations
+  course      Course             @relation(fields: [courseId], references: [id])
+  user        User               @relation(fields: [userId], references: [id])
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  enrollments CourseEnrollment[]
+
+  @@index([courseId])
+  @@index([userId])
+  @@index([tenantId])
+  @@index([verificationId])
+  @@index([createdAt])
+}

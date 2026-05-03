@@ -1,16 +1,33 @@
 'use client'
-import { useClinicStore } from '@/src/store/clinic-store'
+import { useState, useEffect, useCallback } from 'react'
+import { DEFAULT_LOCALE, isValidLocale, SUPPORTED_LOCALES } from '@/src/lib/i18n/locales'
+import type { Locale } from '@/src/lib/i18n/locales'
 
-export type Locale = 'es' | 'en' | 'pt'
+export type { Locale }
 
-const defaultLocale: Locale = 'es'
+const COOKIE_NAME = 'orthonoba-locale'
 
-export function useLocale(): Locale {
-  const clinic = useClinicStore((s) => s.clinic)
-  // Locale resolution: clinic preference → browser → default
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem(`orthonoba-locale-${clinic?.id ?? 'default'}`)
-    if (stored === 'es' || stored === 'en' || stored === 'pt') return stored
-  }
-  return defaultLocale
+export function useLocale() {
+  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE)
+
+  useEffect(() => {
+    const stored = document.cookie
+      .split('; ')
+      .find((c) => c.startsWith(`${COOKIE_NAME}=`))
+      ?.split('=')[1]
+    if (stored && isValidLocale(stored)) {
+      setLocaleState(stored)
+    } else {
+      const browserLang = navigator.language.split('-')[0]
+      if (browserLang && isValidLocale(browserLang)) setLocaleState(browserLang)
+    }
+  }, [])
+
+  const setLocale = useCallback((next: Locale) => {
+    document.cookie = `${COOKIE_NAME}=${next}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
+    setLocaleState(next)
+    window.location.reload()
+  }, [])
+
+  return { locale, setLocale, supported: SUPPORTED_LOCALES }
 }

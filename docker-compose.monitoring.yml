@@ -1,0 +1,118 @@
+# =============================================================================
+# ORTHONOBA — Monitoring Stack
+# =============================================================================
+# Usage:
+#   docker compose -f docker-compose.monitoring.yml up -d
+# Stack: Uptime Kuma + Loki + Promtail + Grafana
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Uptime Kuma — uptime monitoring + alerting dashboard
+  # ---------------------------------------------------------------------------
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: orthonoba-uptime-kuma
+    restart: always
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma:/app/data
+    networks:
+      - orthonoba-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  # ---------------------------------------------------------------------------
+  # Loki — log aggregation backend
+  # ---------------------------------------------------------------------------
+  loki:
+    image: grafana/loki:latest
+    container_name: orthonoba-loki
+    restart: always
+    expose:
+      - "3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki_data:/loki
+    networks:
+      - orthonoba-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ---------------------------------------------------------------------------
+  # Promtail — log shipper (Docker + system logs → Loki)
+  # ---------------------------------------------------------------------------
+  promtail:
+    image: grafana/promtail:latest
+    container_name: orthonoba-promtail
+    restart: always
+    volumes:
+      # Docker socket to scrape container logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # System logs
+      - /var/log:/var/log:ro
+      # Promtail config (create ./infra/monitoring/promtail-config.yml)
+      - ./infra/monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - orthonoba-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ---------------------------------------------------------------------------
+  # Grafana — visualization dashboards
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: orthonoba-grafana
+    restart: always
+    ports:
+      - "3002:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER:-admin}
+      - GF_SERVER_ROOT_URL=https://grafana.orthonoba.app
+      - GF_SMTP_ENABLED=false
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - loki
+    networks:
+      - orthonoba-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+# =============================================================================
+# Networks — attach to main app network
+# =============================================================================
+networks:
+  orthonoba-net:
+    external: true
+    name: orthonoba-net
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  uptime-kuma:
+    name: orthonoba_uptime_kuma
+  loki_data:
+    name: orthonoba_loki_data
+  grafana_data:
+    name: orthonoba_grafana_data

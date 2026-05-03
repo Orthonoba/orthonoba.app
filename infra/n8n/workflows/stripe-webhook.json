@@ -1,0 +1,319 @@
+{
+  "meta": {
+    "instanceId": "orthonoba-n8n",
+    "templateCredsSetupCompleted": true
+  },
+  "name": "Stripe Webhook Handler",
+  "nodes": [
+    {
+      "id": "node-webhook-trigger",
+      "name": "Stripe Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "stripe-events",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "stripe-events",
+        "responseMode": "onReceived",
+        "responseCode": 200,
+        "responseData": "firstEntryJson",
+        "options": {
+          "rawBody": true
+        }
+      }
+    },
+    {
+      "id": "node-switch-event-type",
+      "name": "Route by Event Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [480, 300],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "customer.subscription.created",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "subscription_created"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "customer.subscription.deleted",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "subscription_deleted"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "invoice.payment_failed",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "payment_failed"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "node-forward-subscription-created",
+      "name": "Forward: Subscription Created",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 160],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.orthonoba.app/api/v1/webhooks/stripe",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.ORTHONOBA_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-stripe-event-source",
+              "value": "n8n-relay"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "mode": "raw",
+          "raw": "={{ JSON.stringify($json.body) }}"
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-forward-subscription-deleted",
+      "name": "Forward: Subscription Deleted",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.orthonoba.app/api/v1/webhooks/stripe",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.ORTHONOBA_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-stripe-event-source",
+              "value": "n8n-relay"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "mode": "raw",
+          "raw": "={{ JSON.stringify($json.body) }}"
+        },
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "node-forward-payment-failed",
+      "name": "Forward: Payment Failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 440],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.orthonoba.app/api/v1/webhooks/stripe",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.ORTHONOBA_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-stripe-event-source",
+              "value": "n8n-relay"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "mode": "raw",
+          "raw": "={{ JSON.stringify($json.body) }}"
+        },
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "node-send-payment-failure-email",
+      "name": "Email: Payment Failure Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [960, 440],
+      "parameters": {
+        "fromEmail": "noreply@orthonoba.app",
+        "toEmail": "automatizadental@gmail.com",
+        "subject": "=Payment Failed: {{ $('Stripe Webhook').item.json.body.data.object.customer_email ?? $('Stripe Webhook').item.json.body.data.object.customer }}",
+        "emailType": "html",
+        "message": "=<h2>Payment Failure Alert</h2>\n<p><strong>Event:</strong> invoice.payment_failed</p>\n<p><strong>Customer:</strong> {{ $('Stripe Webhook').item.json.body.data.object.customer }}</p>\n<p><strong>Customer Email:</strong> {{ $('Stripe Webhook').item.json.body.data.object.customer_email ?? 'N/A' }}</p>\n<p><strong>Invoice ID:</strong> {{ $('Stripe Webhook').item.json.body.data.object.id }}</p>\n<p><strong>Amount Due:</strong> {{ ($('Stripe Webhook').item.json.body.data.object.amount_due / 100).toFixed(2) }} {{ ($('Stripe Webhook').item.json.body.data.object.currency ?? 'eur').toUpperCase() }}</p>\n<p><strong>Attempt Count:</strong> {{ $('Stripe Webhook').item.json.body.data.object.attempt_count }}</p>\n<p><strong>Next Payment Attempt:</strong> {{ $('Stripe Webhook').item.json.body.data.object.next_payment_attempt ? new Date($('Stripe Webhook').item.json.body.data.object.next_payment_attempt * 1000).toISOString() : 'No further attempts' }}</p>\n<hr>\n<p>View in <a href=\"https://dashboard.stripe.com/invoices/{{ $('Stripe Webhook').item.json.body.data.object.id }}\">Stripe Dashboard</a></p>",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "smtp-credentials",
+          "name": "Orthonoba SMTP"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Stripe Webhook": {
+      "main": [
+        [
+          {
+            "node": "Route by Event Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Event Type": {
+      "main": [
+        [
+          {
+            "node": "Forward: Subscription Created",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Forward: Subscription Deleted",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Forward: Payment Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Forward: Payment Failed": {
+      "main": [
+        [
+          {
+            "node": "Email: Payment Failure Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "",
+    "timezone": "UTC"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2026-05-03T00:00:00.000Z",
+      "updatedAt": "2026-05-03T00:00:00.000Z",
+      "id": "tag-stripe",
+      "name": "stripe"
+    },
+    {
+      "createdAt": "2026-05-03T00:00:00.000Z",
+      "updatedAt": "2026-05-03T00:00:00.000Z",
+      "id": "tag-billing",
+      "name": "billing"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-05-03T00:00:00.000Z",
+  "versionId": "1"
+}

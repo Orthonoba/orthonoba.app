@@ -1,0 +1,89 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches: [staging]
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --tag orthonoba-app:staging \
+            --tag orthonoba-app:${{ github.sha }} \
+            --build-arg NEXT_TELEMETRY_DISABLED=1 \
+            --file Dockerfile \
+            .
+
+      - name: Save image as tarball
+        run: docker save orthonoba-app:staging | gzip > /tmp/orthonoba-staging.tar.gz
+
+      - name: Copy image to staging server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: deploy
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: /tmp/orthonoba-staging.tar.gz
+          target: /tmp/
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: deploy
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -euo pipefail
+
+            # Load the transferred image
+            docker load < /tmp/orthonoba-staging.tar.gz
+            rm -f /tmp/orthonoba-staging.tar.gz
+
+            cd /opt/orthonoba
+
+            # Restart app with staging overrides
+            docker compose \
+              -f docker-compose.yml \
+              -f docker-compose.staging.yml \
+              up -d --no-deps app
+
+            # Health check
+            for i in $(seq 1 10); do
+              if curl -sf http://localhost:3000/api/health; then
+                echo "Staging healthy after $i checks"
+                break
+              fi
+              echo "Waiting... ($i/10)"
+              sleep 5
+            done
+
+      - name: Staging health check (external)
+        run: |
+          sleep 15
+          curl -f https://staging.orthonoba.app/api/health || echo "Warning: external health check failed (may need DNS)"
+
+      - name: Notify deployment
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          echo "Staging deployment $STATUS — commit ${{ github.sha }}"
+          # Wire in Slack/Discord webhook here if needed:
+          # curl -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+          #   -H 'Content-type: application/json' \
+          #   --data "{\"text\":\"Staging deploy $STATUS: ${{ github.sha }}\"}"

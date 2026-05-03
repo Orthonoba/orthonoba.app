@@ -1,0 +1,86 @@
+# =============================================================================
+# ORTHONOBA — Staging Docker Compose Override
+# =============================================================================
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+# Requires: .env.staging file
+# Notes:
+#   - No certbot (use Cloudflare tunnel or self-signed certs for staging)
+#   - MailHog replaces real SMTP for safe email testing
+#   - Different DB name to avoid collisions with production
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # App — staging overrides
+  # ---------------------------------------------------------------------------
+  app:
+    image: orthonoba-app:staging
+    container_name: orthonoba-app-staging
+    env_file:
+      - .env.staging
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_ENV=staging
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mailhog:
+        condition: service_started
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — staging database
+  # ---------------------------------------------------------------------------
+  postgres:
+    container_name: orthonoba-postgres-staging
+    environment:
+      POSTGRES_DB: orthonoba_staging
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  # ---------------------------------------------------------------------------
+  # Redis — staging instance (smaller memory cap)
+  # ---------------------------------------------------------------------------
+  redis:
+    container_name: orthonoba-redis-staging
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+
+  # ---------------------------------------------------------------------------
+  # Nginx — staging (no certbot volume, allows self-signed)
+  # ---------------------------------------------------------------------------
+  nginx:
+    container_name: orthonoba-nginx-staging
+    volumes:
+      - ./nginx:/etc/nginx/conf.d:ro
+      # Self-signed or Cloudflare origin cert for staging
+      - ./certbot/conf:/etc/letsencrypt:ro
+
+  # ---------------------------------------------------------------------------
+  # Certbot — disabled for staging (override entrypoint to no-op)
+  # ---------------------------------------------------------------------------
+  certbot:
+    entrypoint: /bin/sh -c 'echo "Certbot disabled in staging"; tail -f /dev/null'
+
+  # ---------------------------------------------------------------------------
+  # MailHog — local SMTP capture for email testing
+  # ---------------------------------------------------------------------------
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: orthonoba-mailhog
+    restart: always
+    ports:
+      - "8025:8025"   # Web UI
+      - "1025:1025"   # SMTP
+    networks:
+      - orthonoba-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"

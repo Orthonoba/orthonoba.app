@@ -100,7 +100,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-100">
         <nav className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
               <span className="text-white font-bold text-xs">O</span>
             </div>
             <span className="font-semibold text-slate-900 text-sm">Orthonoba</span>
@@ -255,7 +255,7 @@ export default function HomePage() {
                       key={f}
                       className={`text-xs flex items-start gap-2 ${p.featured ? 'text-blue-100' : 'text-slate-600'}`}
                     >
-                      <span className={`mt-0.5 flex-shrink-0 ${p.featured ? 'text-white' : 'text-green-500'}`}>✓</span>
+                      <span className={`mt-0.5 shrink-0 ${p.featured ? 'text-white' : 'text-green-500'}`}>✓</span>
                       {f}
                     </li>
                   ))}
