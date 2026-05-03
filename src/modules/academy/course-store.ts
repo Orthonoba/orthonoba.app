@@ -134,6 +134,8 @@ export async function createLesson(
     id: crypto.randomUUID(),
     courseId,
     sectionId,
+    // Auto-assign IDs to resources that arrive without one
+    resources: data.resources?.map((r) => ('id' in r && r.id ? r : { ...r, id: crypto.randomUUID() })),
     createdAt: new Date().toISOString(),
   }
   lessons.set(lesson.id, lesson)

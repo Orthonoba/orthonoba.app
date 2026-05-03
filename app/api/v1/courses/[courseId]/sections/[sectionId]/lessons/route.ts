@@ -36,6 +36,10 @@ export const POST = withTenant<Params>(async (req, { params, session }) => {
     return NextResponse.json(fail('VALIDATION_ERROR', 'Datos inválidos.', parsed.error.flatten()), { status: HTTP_STATUS.VALIDATION_ERROR })
   }
 
-  const lesson = await createLesson(params.courseId, params.sectionId, parsed.data)
+  const lessonData = {
+    ...parsed.data,
+    resources: parsed.data.resources?.map((r) => ({ ...r, id: crypto.randomUUID() })),
+  }
+  const lesson = await createLesson(params.courseId, params.sectionId, lessonData)
   return NextResponse.json(ok(lesson), { status: 201 })
 })
