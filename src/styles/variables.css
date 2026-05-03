@@ -1,19 +1,132 @@
+/* ============================================================
+   ORTHONOBA — CareNova Pro Design Token System
+   Prefix: --cn-
+   CareNova Pro Extended theme injection point: [data-theme="carenova"]
+   ============================================================ */
+
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  /* ----------------------------------------------------------
+     PRIMARY BLUE SCALE
+     ---------------------------------------------------------- */
+  --cn-primary-50:  #eff6ff;
+  --cn-primary-100: #dbeafe;
+  --cn-primary-200: #bfdbfe;
+  --cn-primary-300: #93c5fd;
+  --cn-primary-400: #60a5fa;
+  --cn-primary-500: #3b82f6;
+  --cn-primary-600: #2563eb;
+  --cn-primary-700: #1d4ed8;
+  --cn-primary-800: #1e40af;
+  --cn-primary-900: #1e3a8a;
 
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
+  /* ----------------------------------------------------------
+     CLINICAL TEAL SCALE
+     ---------------------------------------------------------- */
+  --cn-teal-50:  #f0fdfa;
+  --cn-teal-100: #ccfbf1;
+  --cn-teal-200: #99f6e4;
+  --cn-teal-300: #5eead4;
+  --cn-teal-400: #2dd4bf;
+  --cn-teal-500: #14b8a6;
+  --cn-teal-600: #0d9488;
+  --cn-teal-700: #0f766e;
 
-  --secondary: #14b8a6;
-  --accent: #7c3aed;
+  /* ----------------------------------------------------------
+     SEMANTIC COLORS
+     ---------------------------------------------------------- */
+  /* Success */
+  --cn-success-50:  #f0fdf4;
+  --cn-success-100: #dcfce7;
+  --cn-success-500: #22c55e;
+  --cn-success-600: #16a34a;
+  --cn-success-700: #15803d;
 
-  --border: #e2e8f0;
-  --card: #ffffff;
+  /* Warning */
+  --cn-warning-50:  #fffbeb;
+  --cn-warning-100: #fef3c7;
+  --cn-warning-500: #f59e0b;
+  --cn-warning-600: #d97706;
+  --cn-warning-700: #b45309;
 
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  /* Danger */
+  --cn-danger-50:  #fef2f2;
+  --cn-danger-100: #fee2e2;
+  --cn-danger-500: #ef4444;
+  --cn-danger-600: #dc2626;
+  --cn-danger-700: #b91c1c;
 
-  --radius: 16px;
+  /* Info */
+  --cn-info-50:  #eff6ff;
+  --cn-info-100: #dbeafe;
+  --cn-info-500: #3b82f6;
+  --cn-info-600: #2563eb;
+  --cn-info-700: #1d4ed8;
+
+  /* ----------------------------------------------------------
+     SURFACE TOKENS
+     ---------------------------------------------------------- */
+  --cn-bg:           #f8fafc;
+  --cn-surface:      #ffffff;
+  --cn-surface-alt:  #f1f5f9;
+  --cn-border:       #e2e8f0;
+  --cn-border-subtle: #f1f5f9;
+
+  /* ----------------------------------------------------------
+     TEXT TOKENS
+     ---------------------------------------------------------- */
+  --cn-text-primary:   #0f172a;
+  --cn-text-secondary: #334155;
+  --cn-text-muted:     #64748b;
+  --cn-text-disabled:  #94a3b8;
+  --cn-text-inverse:   #ffffff;
+
+  /* ----------------------------------------------------------
+     RADIUS TOKENS
+     ---------------------------------------------------------- */
+  --cn-radius-sm:   6px;
+  --cn-radius-md:   10px;
+  --cn-radius-lg:   14px;
+  --cn-radius-xl:   20px;
+  --cn-radius-2xl:  24px;
+  --cn-radius-full: 9999px;
+
+  /* ----------------------------------------------------------
+     SHADOW TOKENS
+     ---------------------------------------------------------- */
+  --cn-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --cn-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07);
+  --cn-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+  --cn-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --cn-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+
+  /* ----------------------------------------------------------
+     TYPOGRAPHY
+     ---------------------------------------------------------- */
+  --cn-font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji");
+  --cn-font-mono: var(--font-geist-mono, ui-monospace, SFMono-Regular, "SF Mono",
+    Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
+
+  /* ----------------------------------------------------------
+     LAYOUT
+     ---------------------------------------------------------- */
+  --cn-sidebar-width:     256px;
+  --cn-sidebar-collapsed: 64px;
+  --cn-header-height:     56px;
+
+  /* ----------------------------------------------------------
+     TRANSITIONS
+     ---------------------------------------------------------- */
+  --cn-transition: 150ms ease;
+
+  /* ----------------------------------------------------------
+     WHITE-LABEL TENANT OVERRIDES
+     CareNova Pro injection point — these are overridden by
+     [data-theme="carenova"] or per-tenant data attributes.
+     ---------------------------------------------------------- */
+  --tenant-primary:       var(--cn-primary-600);
+  --tenant-primary-hover: var(--cn-primary-700);
+  --tenant-secondary:     var(--cn-teal-500);
+  --tenant-name:          "Orthonoba";
 }

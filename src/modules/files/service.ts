@@ -18,15 +18,28 @@ export const MAX_FILE_SIZES: Record<FileType, number> = {
 }
 
 export const MIME_TYPE_MAP: Record<string, FileType> = {
+  // STL
   'model/stl': 'stl',
   'application/sla': 'stl',
-  'application/dicom': 'dicom',
+  'application/vnd.ms-pki.stl': 'stl',
   'application/octet-stream': 'stl',
+  // OBJ
+  'model/obj': 'obj',
+  // PLY
+  'application/ply': 'ply',
+  'model/ply': 'ply',
+  // DICOM
+  'application/dicom': 'dicom',
+  'image/dicom': 'dicom',
+  // Images
   'image/jpeg': 'jpg',
   'image/png': 'png',
+  // PDF
   'application/pdf': 'pdf',
+  // ZIP
   'application/zip': 'zip',
   'application/x-zip-compressed': 'zip',
+  'application/x-7z-compressed': 'zip',
 }
 
 // ─── Upload result ────────────────────────────────────────────────────────────

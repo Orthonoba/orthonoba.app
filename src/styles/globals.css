@@ -1,22 +1,28 @@
 @import "tailwindcss";
+@import "./variables.css";
+@import "./theme.css";
 
-* {
+/* ============================================================
+   BASE RESETS
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
 html,
 body {
-  width: 100%;
-  min-height: 100%;
-  font-family: Arial, Helvetica, sans-serif;
-  background-color: #f8fafc;
-  color: #0f172a;
-}
-
-body {
+  height: 100%;
+  font-family: var(--cn-font-sans);
+  background-color: var(--cn-bg);
+  color: var(--cn-text-primary);
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -31,4 +37,62 @@ button {
 img {
   max-width: 100%;
   height: auto;
+  display: block;
+}
+
+/* ============================================================
+   CUSTOM SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--cn-border);
+  border-radius: var(--cn-radius-full);
+  transition: background-color var(--cn-transition);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--cn-text-muted);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--cn-border) transparent;
+}
+
+/* ============================================================
+   FOCUS RING UTILITY
+   ============================================================ */
+.cn-focus-ring {
+  outline: 2px solid var(--cn-primary-500);
+  outline-offset: 2px;
+}
+
+.cn-focus-ring-inset {
+  outline: 2px solid var(--cn-primary-500);
+  outline-offset: -2px;
+}
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@media print {
+  aside,
+  [data-sidebar],
+  nav[data-role="sidebar"] {
+    display: none !important;
+  }
+
+  body {
+    background-color: #ffffff;
+    color: #000000;
+  }
 }

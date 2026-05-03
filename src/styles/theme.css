@@ -1,9 +1,109 @@
+/* ============================================================
+   ORTHONOBA — Theme Classes & Utility Patterns
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   LIGHT THEME
+   ---------------------------------------------------------- */
 .light {
-  background-color: var(--background);
-  color: var(--foreground);
+  --cn-bg:            #f8fafc;
+  --cn-surface:       #ffffff;
+  --cn-surface-alt:   #f1f5f9;
+  --cn-border:        #e2e8f0;
+  --cn-border-subtle: #f1f5f9;
+
+  --cn-text-primary:   #0f172a;
+  --cn-text-secondary: #334155;
+  --cn-text-muted:     #64748b;
+  --cn-text-disabled:  #94a3b8;
+  --cn-text-inverse:   #ffffff;
 }
 
+/* ----------------------------------------------------------
+   DARK THEME
+   ---------------------------------------------------------- */
 .dark {
-  background-color: #0f172a;
-  color: #f8fafc;
+  --cn-bg:            #0b1120;
+  --cn-surface:       #0f172a;
+  --cn-surface-alt:   #1e293b;
+  --cn-border:        #1e293b;
+  --cn-border-subtle: #0f172a;
+
+  --cn-text-primary:   #f1f5f9;
+  --cn-text-secondary: #cbd5e1;
+  --cn-text-muted:     #64748b;
+  --cn-text-disabled:  #334155;
+  --cn-text-inverse:   #0f172a;
+
+  --cn-primary-50:  #1e3a8a;
+  --cn-primary-100: #1e40af;
+
+  --cn-surface-card:    #1e293b;
+}
+
+/* ----------------------------------------------------------
+   CARENOVA PRO SKIN INJECTION POINT
+   This ruleset is intentionally empty.
+   The CareNova Pro Extended template will inject its own
+   design token overrides here at build time or via CSS layer.
+   ---------------------------------------------------------- */
+[data-theme="carenova"] {
+  /* CareNova Pro skin injection point */
+}
+
+/* ----------------------------------------------------------
+   WHITE-LABEL TENANT OVERRIDE PATTERN
+   Usage in HTML: <div data-tenant-primary="#7c3aed">
+   Sets --tenant-primary from the HTML attribute value.
+   Full dynamic override is handled via inline style injection
+   from the tenant middleware (x-tenant-primary header).
+   ---------------------------------------------------------- */
+[data-tenant-primary] {
+  --tenant-primary: attr(data-tenant-primary color, var(--cn-primary-600));
+}
+
+/* ----------------------------------------------------------
+   GLASS UTILITY
+   Frosted glass card / panel effect.
+   ---------------------------------------------------------- */
+.cn-glass {
+  background-color: rgb(255 255 255 / 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgb(255 255 255 / 0.4);
+}
+
+.dark .cn-glass {
+  background-color: rgb(15 23 42 / 0.7);
+  border-color: rgb(255 255 255 / 0.08);
+}
+
+/* ----------------------------------------------------------
+   DENTAL BRAND GRADIENT BACKGROUND
+   Subtle radial gradient for hero / marketing surfaces.
+   ---------------------------------------------------------- */
+.cn-dental-gradient {
+  background: radial-gradient(
+    ellipse 80% 60% at 50% -10%,
+    rgb(59 130 246 / 0.08) 0%,
+    rgb(20 184 166 / 0.05) 40%,
+    transparent 100%
+  ),
+  var(--cn-bg);
+}
+
+/* ----------------------------------------------------------
+   SIDEBAR ACTIVE NAV ITEM
+   ---------------------------------------------------------- */
+.cn-sidebar-active {
+  background-color: var(--cn-primary-50);
+  color: var(--cn-primary-700);
+  border-right: 2px solid var(--cn-primary-600);
+  font-weight: 600;
+}
+
+.dark .cn-sidebar-active {
+  background-color: rgb(37 99 235 / 0.15);
+  color: var(--cn-primary-300);
+  border-right-color: var(--cn-primary-400);
 }
