@@ -1,278 +1,200 @@
-# ORTHONOBA — CLAUDE.md
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+---
+
+## Comandos esenciales
+
+```bash
+npm run dev          # Dev server → http://localhost:3000 (Turbopack)
+npm run build        # Build de producción
+npm run lint         # ESLint sobre todo el proyecto
+npx tsc --noEmit     # Verificación TypeScript sin compilar
+```
+
+**Objetivo de calidad:** `tsc --noEmit` y `eslint` deben terminar con 0 errores antes de cada commit. Los 16 warnings de `no-console` en `src/services/stripe/webhooks.ts` son intencionados (logs de eventos Stripe).
+
+---
 
 ## Stack
 
-- Next.js 16.2.4 (App Router) — React 19, TypeScript strict
-- Zustand 5.x con `persist` middleware
-- TailwindCSS v4 (`@tailwindcss/postcss`)
-- jose (JWT signing, edge-safe)
-- Stripe SDK v22 (`2026-04-22.dahlia`) — billing + subscriptions
-- Zod v4 — `z.record(keyType, valueType)` obligatorio, `.regex(re, msg)` con mensaje
-- Mock data — DB no conectada, preparada para Neon DB
-- Sin ORM ni proveedor de auth externo
+| Tecnología | Versión | Nota |
+|---|---|---|
+| Next.js | 16.2.4 | App Router + Turbopack |
+| React | 19 | Server Components por defecto |
+| TypeScript | strict | `noImplicitReturns`, `noFallthroughCasesInSwitch` |
+| TailwindCSS | v4 | `@tailwindcss/postcss` — usar `bg-linear-to-br` NO `bg-gradient-to-br` |
+| Zustand | 5.x | `persist` middleware |
+| jose | edge-safe | JWT signing sin Node.js APIs |
+| Stripe SDK | v22 `2026-04-22.dahlia` | Breaking changes — ver sección Stripe |
+| Zod | v4 | `z.record(keyType, valueType)` obligatorio |
+| Sonner | — | Toasts: `toast.success/error/info/warning` |
+| lucide-react | — | Todos los iconos — sin `Tooth`, sin `bg-gradient-to-br` |
 
 ---
 
 ## Path Alias
 
-`"@/*": ["./*"]` — la raíz es la carpeta del proyecto, **no** `src/`.
+```
+"@/*": ["./*"]  — raíz = carpeta del proyecto, NO src/
+```
 
 ```
-@/src/lib/dal      ✓      @/lib/dal      ✗
-@/src/types/user   ✓      @/types/user   ✗
+@/src/lib/dal   ✓     @/lib/dal    ✗
+@/src/types/user ✓    @/types/user ✗
 ```
 
 ---
 
-## Mapa de Directorios
+## Estructura de rutas
 
 ```
-app/                           ← Rutas Next.js únicamente (no lógica aquí)
-  (auth)/login/page.tsx        ← /login
-  dashboard/layout.tsx         ← verifySession() + StoreHydrator
-  api/v1/
+app/                             ← Next.js App Router (solo rutas, sin lógica)
+  (auth)/                        ← Route group auth — NO añade segmento a la URL
+    layout.tsx                   ← Fondo dark + glassmorphism
+    login/page.tsx               → /login
+    register/page.tsx            → /register
+    forgot-password/page.tsx     → /forgot-password
+    verify/page.tsx              → /verify
+
+  (dashboard)/                   ← Route group dashboard — NO añade segmento a la URL
+    layout.tsx                   ← Sidebar + topbar (dark mode) — rutas: /X
+    clinics/page.tsx             → /clinics
+    clinics/new/page.tsx         → /clinics/new
+    clinics/[id]/page.tsx        → /clinics/:id
+    clinics/[id]/cases/          → /clinics/:id/cases
+    clinics/[id]/patients/       → /clinics/:id/patients
+    clinics/[id]/settings/       → /clinics/:id/settings
+    cases/page.tsx               → /cases
+    cases/new/page.tsx           → /cases/new
+    cases/[id]/page.tsx          → /cases/:id
+    cases/[id]/files/page.tsx    → /cases/:id/files
+    cases/[id]/notes/page.tsx    → /cases/:id/notes
+    patients/page.tsx            → /patients
+    patients/new/page.tsx        → /patients/new
+    patients/[id]/page.tsx       → /patients/:id
+    doctors/page.tsx             → /doctors
+    doctors/[id]/page.tsx        → /doctors/:id
+    orders/page.tsx              → /orders
+    orders/[id]/page.tsx         → /orders/:id
+    labs/page.tsx                → /labs
+    labs/[id]/page.tsx           → /labs/:id
+    courses/page.tsx             → /courses
+    courses/new/page.tsx         → /courses/new
+    courses/[id]/page.tsx        → /courses/:id
+    courses/[id]/lessons/[lessonId]/page.tsx → /courses/:id/lessons/:lessonId
+    courses/[id]/students/page.tsx → /courses/:id/students
+    automation/page.tsx          → /automation
+    automation/rules/page.tsx    → /automation/rules
+    automation/reminders/page.tsx → /automation/reminders
+    marketing/leads/page.tsx     → /marketing/leads
+    marketing/campaigns/page.tsx → /marketing/campaigns
+    marketing/funnels/page.tsx   → /marketing/funnels
+    marketing/analytics/page.tsx → /marketing/analytics
+    ai/page.tsx                  → /ai
+    billing/page.tsx             → /billing
+    billing/invoices/page.tsx    → /billing/invoices
+    billing/plans/page.tsx       → /billing/plans
+    admin/users/page.tsx         → /admin/users
+    admin/roles/page.tsx         → /admin/roles
+    settings/page.tsx            → /settings
+    settings/profile/page.tsx    → /settings/profile
+    settings/security/page.tsx   → /settings/security
+    settings/api-keys/page.tsx   → /settings/api-keys
+    executive/page.tsx           → /executive
+    sitemap/page.tsx             → /sitemap
+    files/stl/page.tsx           → /files/stl
+
+  dashboard/                     ← Ruta explícita legacy
+    layout.tsx                   → /dashboard (main dashboard por rol)
+    page.tsx                     → /dashboard
+
+  api/v1/                        ← Todos los endpoints REST
     auth/login · logout · me
-    clinics/[clinicId]
-    orders/[orderId]
-    patients/[patientId]
-    labs/[labId]
-    cases/[caseId]
-    doctors/[doctorId]
-    files/upload
-    plans/                     ← GET catálogo público de planes
-    billing/                   ← GET subscription + invoices
-      subscriptions · upgrade · cancel · portal · coupons · invoices
-    stripe/checkout · webhooks
-    webhooks/stripe             ← endpoint canónico webhooks
-    marketing/
-      campaigns/[id]/metrics
-      leads/[id]/score · convert
-      seo/[slug]
-      google-ads · meta-ads
-      landing-pages · funnels/[id]/submit
-      social/posts · social/schedule
-      templates · reviews · referrals/[id]/link
-      analytics
-    automation/
-      rules/[ruleId]           ← CRUD reglas + historial ejecuciones
-      executions               ← log de ejecuciones
-      reminders                ← smart reminders + ?dispatch=true
-    ai/
-      leads/qualify            ← GET ?leadId= o ?batch=true&limit=
-      campaigns/suggest        ← GET sugerencias AI por KPIs
-      orders/predict           ← POST predicción tratamientos por paciente
-      retention/risks          ← POST análisis churn por batch de pacientes
-      crm/insights             ← GET report inteligencia CRM
-      tasks                    ← GET/POST cola de tareas agénticas (futuro)
-    dashboard/
-      clinic                   ← GET ClinicDashboard (clinic_admin, doctor)
-      lab                      ← GET LabDashboard (lab_admin)
-      marketing                ← GET MarketingDashboard (clinic_admin)
-      finance                  ← GET FinanceDashboard (clinic_admin, lab_admin)
-      executive                ← GET ExecutiveReport (super_admin)
-      role                     ← GET auto-selecciona dashboard por session.role
-      kpis                     ← GET ?metrics=cac,ltv,mrr (picker flexible)
-    notifications/
-      whatsapp                 ← POST envío + GET webhook verificación Meta
-      email                    ← POST email transaccional
-    courses/                   ← Orthonoba Academy (LMS)
-      categories · my
-      [courseId]/
-        enroll · progress · certificate · students · analytics
-        sections/[sectionId]/lessons
-        lessons/[lessonId]/complete · quiz · quiz/submit
-    certificates/[certId]      ← verificación pública de certificados
-    instructors/               ← gestión de instructores
+    billing/ · stripe/ · webhooks/stripe
+    ai/ · automation/ · notifications/
+    courses/ · certificates/ · instructors/
+    clinics/ · patients/ · orders/ · labs/ · cases/ · doctors/ · files/
+    dashboard/ · marketing/ · plans/
 
-src/                           ← Toda la lógica, tipos, config, stores, hooks
-  middleware.ts                ← subdominio + guard sesión + headers tenant
-  app/
-    actions/auth.ts            ← loginAction, logoutAction  ('use server')
-  store/
-    auth-store.ts              ← persist 'orthonoba-auth' | AuthStatus state machine
-    clinic-store.ts            ← persist 'orthonoba-clinic' | TenantContext
-    ui-store.ts                ← estado sidebar (sin persist)
-  types/
-    user.ts                    ← User, UserRole (6 roles), UserStatus, SessionPayload
-    clinic.ts                  ← Clinic, TenantContext, PlanTier, Address, BusinessHours,
-                                  ClinicSettings, ClinicModule, ClinicIntegration
-    lab.ts                     ← LabProfile, LabTechnician, LabMaterial, LabWorkstation
-    delivery.ts                ← PickupJob, DeliveryDriver, DeliveryRoute,
-                                  DriverLocationUpdate, DeliveryRouteStop
-    tracking.ts                ← TrackingEvent, OrderTimeline, OrderTrackingKPIs
-    patient.ts                 ← Patient, MedicalHistory, Odontogram,
-                                  Appointment, TreatmentPlan, ClinicalNote, ToothFDI
-    orders.ts                  ← DentalOrder, OrderFile, CadDesign, PickupRequest,
-                                  ShipmentTracking, ProductionStage, QualityCheckResult
-    billing.ts                 ← Invoice, Payment, Quote, CreditNote, Subscription,
-                                  TaxRate, PaymentLink, Coupon, BillingCycle,
-                                  TokenBalance, TokenTransaction, UsageRecord
-    marketing.ts               ← Campaign, Lead, GoogleAdsCampaign, MetaCampaign,
-                                  LandingPage, LeadFunnel, LeadScore, SocialPost,
-                                  MarketingTemplate, MarketingDashboardKPIs
-    automation.ts              ← AutomationRule, AutomationExecution, SmartReminder,
-                                  WhatsAppMessage, AgentTask, IAIProvider,
-                                  AILeadQualification, CampaignSuggestion,
-                                  OrderPrediction, PatientChurnRisk, CRMIntelligenceReport
-    dashboard.ts               ← ClinicDashboard, LabDashboard, FinanceDashboard,
-                                  MarketingDashboard, ExecutiveReport, RoleDashboardType,
-                                  KPIValue, PeriodComparison, MRRBreakdown, CACKpi, LTVKpi,
-                                  ChurnKpi, ConversionFunnel, ProductionTimeKpi
-    academy.ts                 ← Course, Lesson, CourseSection, Instructor, Quiz,
-                                  CourseEnrollment, LessonProgress, Certificate,
-                                  CourseReview, LiveSession, AcademyDashboardKPIs
-    order.ts                   ← OBSOLETO — no extender, usar orders.ts
-  lib/
-    session.ts                 ← encrypt/decrypt JWT (jose, edge-safe, sin cookies)
-    auth.ts                    ← createSession / deleteSession / getSession (server-only)
-    auth-service.ts            ← IAuthService + MockAuthService singleton (swappable)
-    dal.ts                     ← verifySession, getCurrentUser, getTenantContext,
-                                  verifyTenantAccess, checkPermission, requirePermission
-    route-guard.ts             ← canAccess(), getRedirectUrl() — lógica pura sin Next.js
-    mock-users.ts              ← usuarios demo (sustituir por query DB)
-    mock-clinics.ts            ← clínicas demo: plan=starter/growth/enterprise
-    db.ts                      ← stub cliente Neon DB (no conectado)
-  services/
-    ai/
-      provider.ts              ← IAIProvider + ClaudeProvider + RuleEngineProvider
-                                  getAIProvider() resuelve por ANTHROPIC_API_KEY
-      lead-qualifier.ts        ← qualifyLead(), qualifyLeadBatch() — reglas + Claude
-      campaign-advisor.ts      ← getCampaignSuggestions() — reglas estacionales + Claude
-      order-predictor.ts       ← predictOrders() — contexto paciente → tratamientos
-      retention-engine.ts      ← assessChurnRisk(), buildCRMReport() — churn + insights
-    whatsapp/
-      index.ts                 ← IWhatsAppService, MetaWhatsAppService, WA_TEMPLATES
-                                  getWhatsAppService() resuelve por WHATSAPP_TOKEN
-    automation/
-      rule-engine.ts           ← dispatchTrigger(), fireRule(), executeAction()
-      reminder-service.ts      ← scheduleAppointmentReminders(), dispatchDueReminders()
-    dashboard/
-      kpi-calculator.ts        ← funciones puras: CAC, LTV, MRR, ARR, churn, ROAS, NPS,
-                                  productionTime, conversionFunnel, compare(), toKPIValue()
-      clinic-dashboard.ts      ← getClinicDashboard(clinicId, name, plan, period)
-      lab-dashboard.ts         ← getLabDashboard(labId, name, plan, period)
-      finance-dashboard.ts     ← getFinanceDashboard(tenantId, type, period)
-      executive-report.ts      ← getExecutiveReport(period) — cross-tenant
-    email/index.ts             ← IEmailService + MockEmailService + emailService
-    stripe/index.ts            ← lazy Stripe client proxy (edge-safe)
-    stripe/billing.ts          ← checkout, portal, changePlan, previewPlanChange
-    stripe/webhooks.ts         ← verifySignature + 15 event handlers
-    stripe/coupons.ts          ← validate, apply, create promotion codes
-  modules/
-    billing/
-      service.ts               ← IBillingService interface
-      validators.ts            ← Zod: checkout, upgrade, cancel, coupon, portal
-      subscription-store.ts    ← in-memory sub store (swap → Neon DB)
-    marketing/
-      service.ts               ← IMarketingService interface
-      validators.ts            ← Zod: lead, campaign, SEO, Google Ads, Meta Ads…
-      lead-store.ts            ← CRUD leads + actividades + scoring automático
-      lead-scoring.ts          ← motor puro: score 0–100, grade A/B/C/D
-      campaign-store.ts        ← campaigns, funnels, landing pages, social, reviews
-    academy/
-      validators.ts            ← Zod: course, lesson, quiz, enrollment, instructor
-      course-store.ts          ← courses, sections, lessons, quizzes, instructors
-      enrollment-store.ts      ← enrollments, progress, quiz attempts, certificates
-    dashboard/
-      dashboard-store.ts       ← TTL cache 5min: getClinic/setClinic/getLab…
-                                  currentPeriod(), previousPeriod(), periodToRange()
-    automation/
-      automation-store.ts      ← rules, executions, reminders, tasks, waMessages
-      validators.ts            ← Zod: rule, reminder, whatsapp, task, qualify
-    orders/
-      service.ts               ← IOrderService interface
-      repository.ts            ← IOrderRepository + IPickupRepository
-    files/
-      service.ts               ← IFileService, MAX_FILE_SIZES, ALLOWED_FILE_TYPES
-  config/
-    permissions.ts             ← Permission type (marketing.* + academy.* incluidos)
-    roles.ts                   ← rolePermissions, roleLabels, hasPermission()
-    site.ts                    ← siteConfig (baseDomain, devBaseDomain, subdomains)
-    plans.ts                   ← PlanConfig, PLANS, getStripePriceId, TOKEN_ALLOCATIONS
-                                  Starter | Growth | Scale | Enterprise
-    marketing.ts               ← DENTAL_TREATMENTS (13), LEAD_SCORING_RULES,
-                                  buildDentistSchema, buildFAQSchema, DENTAL_HASHTAGS
-    academy.ts                 ← ACADEMY_CATEGORIES (8), PLAN_ACADEMY_ACCESS,
-                                  canAccessCourse, CERTIFICATE_TEMPLATES
-    navigation.ts, theme.ts    ← configuración UI
-  hooks/
-    use.Role.ts                ← useRole() → { role, can, is, isAdmin }
-    use.Plan.ts                ← usePlan() → { plan, hasAccess, isGrowth, isScale }
-    useLocale.ts               ← useLocale() → 'es' | 'en' | 'pt'
-  components/
-    ui/                        ← button, input, card, badge, modal (primitivos)
-    ui/login-form.tsx · store-hydrator.tsx · logout-button.tsx
-    navbar/navbar.tsx
-    sidebar/sidebar.tsx
-    layouts/dashboard-shell.tsx · marketing-shell.tsx
-  styles/
-    globals.css, variables.css, theme.css
-  docs/skills.md               ← mapa funcional canónico (fuente de verdad de alcance)
+src/                             ← Toda la lógica, nunca rutas aquí
+  middleware.ts                  ← Subdomain + session guard + tenant headers
+  app/actions/auth.ts            ← loginAction, logoutAction ('use server')
+  store/                         ← Zustand: auth-store, clinic-store, ui-store
+  types/                         ← Tipos globales (usar orders.ts, NO order.ts)
+  lib/                           ← session, auth, dal, route-guard, mock-*
+  services/                      ← ai/, whatsapp/, automation/, dashboard/, email/, stripe/
+  modules/                       ← billing/, marketing/, academy/, dashboard/, automation/, orders/, files/
+  config/                        ← permissions, roles, site, plans, marketing, academy
+  hooks/                         ← useRole, usePlan, useLocale
+  components/                    ← ui/, sidebar/, layouts/
 ```
 
 ---
 
-## Reglas de Arquitectura
+## Reglas de arquitectura
 
-### Rutas vs Lógica
-- `app/` → solo rutas, layouts, páginas, handlers API
-- `src/` → toda la lógica, tipos, config, stores, hooks, componentes
+### Routing crítico
+- `app/(dashboard)/layout.tsx` — hrefs deben ser `/X` (sin prefijo `/dashboard/`) porque el route group no añade segmento
+- `app/dashboard/page.tsx` — es la ÚNICA ruta que usa `/dashboard` como URL
+- Nunca mezclar rutas `(dashboard)` con `dashboard/` — son namespaces distintos
+
+### Lógica App vs Src
+- `app/` → solo rutas, layouts, páginas, API handlers
+- `src/` → toda la lógica, tipos, stores, hooks, componentes, servicios
 - Server Actions → `src/app/actions/`, nunca inline en páginas
-- Rutas API → `app/api/` (raíz), **no** `src/app/api/`
+- No llamar `authService` desde páginas — usar Server Actions o DAL
 
-### Flujo Auth
-1. `middleware.ts` descifra JWT cookie → llama `getRedirectUrl()` (lógica pura)
-2. Layout llama `verifySession()` desde `src/lib/dal.ts` como segunda barrera
-3. `StoreHydrator` sincroniza user resuelto servidor → Zustand cliente
-4. Nunca llamar `authService` desde una página — usar Server Actions o DAL
+### Auth flow
+1. `src/middleware.ts` descifra JWT cookie → `getRedirectUrl()` (lógica pura)
+2. Layout llama `verifySession()` desde `src/lib/dal.ts` (segunda barrera)
+3. `StoreHydrator` sincroniza user server → Zustand client
+4. Hooks `useRole()` / `usePlan()` para control de acceso en cliente
 
-### Tenant Multi-tenant
-- Middleware inyecta headers: `x-clinic-id`, `x-clinic-name`, `x-clinic-type`, `x-subdomain`
-- Leer tenant en Server Components vía `getTenantContext()` / `getCurrentClinic()` (DAL)
-- Todo write de datos debe incluir `clinicId`
-- Producción: `{subdomain}.orthonoba.app` | Dev: `{subdomain}.localhost` o `{subdomain}.lvh.me`
+### Tenant multi-tenant
+- Middleware inyecta: `x-clinic-id`, `x-clinic-name`, `x-clinic-type`, `x-subdomain`
+- Leer en Server Components: `getTenantContext()` / `getCurrentClinic()` (DAL)
+- Todo write debe incluir `clinicId`
+- Prod: `{sub}.orthonoba.app` | Dev: `{sub}.localhost` o `{sub}.lvh.me`
 
 ### Zustand
-- Stores = estado reactivo UI únicamente, sin lógica de negocio
+- Stores = estado UI reactivo únicamente (no lógica de negocio)
 - Verdad del servidor → Zustand vía `StoreHydrator`, no vía fetch cliente
-- Usar `useRole()` y `usePlan()` para control de acceso
 
-### Tipos
-- Usar `src/types/orders.ts` — nunca extender `src/types/order.ts` (obsoleto)
-- Preferir `interface` sobre `type` para entidades
-- Nunca usar `any` — usar `unknown` + narrowing
+### Componentes `'use client'`
+- Usar solo cuando hay interactividad real (useState, event handlers, refs)
+- Server Components por defecto para páginas de solo lectura
+- `loading.tsx` + `error.tsx` en cada directorio de ruta
 
-### Mock Data
-- No conectar DB real. `src/lib/db.ts` permanece como stub
-- Al integrar Neon DB: sustituir lookups en `mock-users.ts` / `mock-clinics.ts`
-- `authService` diseñado para swap: `MockAuthService` → `ApiAuthService`
-
-### Zod v4 — reglas críticas
-- `z.record(z.string(), z.string())` — siempre dos argumentos (keyType, valueType)
-- `z.string().regex(/pattern/, 'mensaje')` — mensaje obligatorio
-- `z.record(z.string(), z.unknown())` para `Record<string, unknown>`
-
-### Stripe SDK v22 (`2026-04-22.dahlia`) — breaking changes
-- `current_period_start/end` → ahora en `subscription.items.data[0]`
-- `retrieveUpcoming` → eliminado, usar `invoices.createPreview()`
-- `PromotionCode.coupon` → ahora en `promoCode.promotion.coupon`
-- `PromotionCode.create({ promotion: { coupon: id, type: 'coupon' } })` — nuevo formato
+### Anti-patrones ESLint activos
+- `no-alert` → usar `toast` de Sonner o dialog de estado (nunca `window.confirm/alert`)
+- `react-hooks/set-state-in-effect` → usar lazy initializers `useState(() => ...)` o mover lógica a event handlers
+- `@next/next/no-html-link-for-pages` → siempre `<Link>` de next/link, nunca `<a href>`
+- `@typescript-eslint/no-unused-vars` → prefix `_` para vars intencionalmente no usadas
 
 ---
 
-## Roles y Permisos
+## TailwindCSS v4 — cambios importantes
 
-**Permisos activos**: `patients.*` · `orders.*` · `billing.*` · `files.*` · `cad.*` ·
-`clinic.*` · `lab.*` · `staff.*` · `reports.*` · `marketing.*` · `academy.*` · `platform.*`
+```
+bg-gradient-to-br → bg-linear-to-br   (CSS moderno)
+flex-shrink-0     → shrink-0
+flex-grow         → grow
+```
 
-| Rol | Estado | Acceso clave |
-|---|---|---|
-| `super_admin` | ✅ | `*` todo |
-| `clinic_admin` | ✅ | patients rw · orders rw · billing rw · marketing · academy manage |
-| `lab_admin` | ✅ | orders rw · files · lab · billing |
-| `doctor` | ✅ | patients rw · orders rw · billing.read · cad · academy enroll |
-| `staff` | ✅ | patients rw · orders.read · billing.read · academy enroll |
-| `instructor` | ✅ | academy manage · academy instruct · academy certificates |
+---
+
+## Roles y permisos
+
+| Rol | Acceso clave |
+|---|---|
+| `super_admin` | `*` todo + `/executive` |
+| `clinic_admin` | patients/orders/billing/marketing/academy manage |
+| `lab_admin` | orders/files/lab/billing |
+| `doctor` | patients/orders/cad/academy enroll |
+| `staff` | patients.read/orders.read/billing.read |
+| `instructor` | academy manage/instruct/certificates |
 
 Para añadir un rol: `src/types/user.ts` → `src/config/roles.ts` → `src/lib/route-guard.ts`
 
@@ -280,114 +202,81 @@ Para añadir un rol: `src/types/user.ts` → `src/config/roles.ts` → `src/lib/
 
 ## Planes SaaS
 
-| Plan | €/mes | Tokens/mes | Academy access |
-|------|-------|-----------|----------------|
-| Starter | €49 | 500 | Cursos free |
-| Growth | €149 | 2,000 | Free + Growth |
-| Scale | €399 | 8,000 | Free + Growth + Scale |
+| Plan | €/mes | Tokens/mes | Academy |
+|---|---|---|---|
+| Starter | €49 | 500 | Free |
+| Growth | €149 | 2.000 | Free + Growth |
+| Scale | €399 | 8.000 | Free + Growth + Scale |
 | Enterprise | Custom | ∞ | Todo |
 
 Env vars Stripe: `STRIPE_PRICE_{STARTER,GROWTH,SCALE,ENTERPRISE}_{MONTHLY,ANNUAL}`
 
 ---
 
-## Academy — Orthonoba LMS
+## Stripe SDK v22 (`2026-04-22.dahlia`) — breaking changes
 
-**8 categorías**: Exocad · Dental Marketing · Sleep Dentistry · Web Design ·
-AI Automation · Clinical Skills · Practice Management · Orthodontics
-
-**Acceso**: `canAccessCourse(planTier, accessLevel)` en `src/config/academy.ts`
-
-**Flujo de certificado**:
-1. Alumno completa ≥90% lecciones → `checkCourseCompletion()` automático
-2. O alumno llama `GET /courses/:id/certificate` manualmente
-3. Certificado emitido con `verificationId` UUID público
-4. Verificación pública: `GET /api/v1/certificates/:verificationId`
-
-**Stores en memoria** (swap → Neon DB):
-- `course-store.ts` → courses, sections, lessons, quizzes, instructors
-- `enrollment-store.ts` → enrollments, lessonProgress, quizAttempts, certificates
+- `current_period_start/end` → en `subscription.items.data[0]`
+- `retrieveUpcoming` → eliminado, usar `invoices.createPreview()`
+- `PromotionCode.coupon` → ahora `promoCode.promotion.coupon`
+- `PromotionCode.create({ promotion: { coupon: id, type: 'coupon' } })`
 
 ---
 
-## Marketing Engine
+## Zod v4 — reglas críticas
 
-**Lead scoring**: 0–100 pts, grade A/B/C/D — `src/modules/marketing/lead-scoring.ts`
-
-**Stores en memoria** (swap → Neon DB):
-- `lead-store.ts` → leads + actividades + re-scoring automático
-- `campaign-store.ts` → campaigns, landing pages, funnels, social, reviews, referrals
-
-**Funnel submit** (`POST /funnels/:id/submit`) — endpoint público, crea lead automáticamente
+- `z.record(z.string(), z.unknown())` — siempre dos argumentos
+- `z.string().regex(/pattern/, 'mensaje')` — mensaje obligatorio
+- Nunca `z.record(z.string())` (solo un arg)
 
 ---
 
-## Dashboard & BI Layer
+## AI Provider pattern
 
-### Endpoints
-| Ruta | Rol | Datos |
-|------|-----|-------|
-| `GET /dashboard/role` | todos | auto-selecciona por session.role |
-| `GET /dashboard/clinic` | clinic_admin, doctor | orders, leads, revenue, automation, academy |
-| `GET /dashboard/lab` | lab_admin | pipeline, producción, quality, revenue por cliente |
-| `GET /dashboard/marketing` | clinic_admin | CAC, funnel, campañas, social, reviews |
-| `GET /dashboard/finance` | clinic_admin, lab_admin | MRR, ARR, LTV, CAC, churn, tokens |
-| `GET /dashboard/executive` | super_admin | platform MRR/ARR, tenant breakdown, growth |
-| `GET /dashboard/kpis?metrics=cac,ltv,mrr` | todos los admins | picker flexible de KPIs |
+```
+ANTHROPIC_API_KEY set    → ClaudeProvider (claude-sonnet-4-6 + prompt caching)
+ANTHROPIC_API_KEY absent → RuleEngineProvider (determinístico, 0 tokens)
+```
 
-### KPIs disponibles en `/dashboard/kpis`
-`cac` · `ltv` · `mrr` · `arr` · `churn` · `conversion` · `roas` · `orders` · `production_time` · `avg_ticket` · `outstanding_invoices` · `lead_score` · `patient_retention` · `on_time_delivery` · `revision_rate`
+`getAIProvider()` en `src/services/ai/provider.ts` — punto de swap único.
 
-### Arquitectura BI
-- `kpi-calculator.ts` — funciones puras, sin imports de stores (testeable)
-- `*-dashboard.ts` — llaman stores + calculator, retornan tipos tipados
-- TTL cache 5 min en `dashboard-store.ts` — `?refresh=true` fuerza recalculo
-- Period format: `'YYYY-MM'` — helper `currentPeriod()` para el mes en curso
+Engines: `lead-qualifier.ts` · `campaign-advisor.ts` · `order-predictor.ts` · `retention-engine.ts`
 
 ---
 
-## AI Automation Engine
+## Mock Data → Neon DB (swap points)
 
-### Provider pattern — swap point
-```
-ANTHROPIC_API_KEY set    → ClaudeProvider (claude-sonnet-4-6, prompt caching)
-ANTHROPIC_API_KEY absent → RuleEngineProvider (deterministic, 0 tokens)
-```
-`getAIProvider()` en `src/services/ai/provider.ts` — usado por todos los engines.
-
-### Engines (reglas + Claude)
-| Engine | Archivo | Función |
-|--------|---------|---------|
-| Lead Qualifier | `ai/lead-qualifier.ts` | tier hot/warm/cold + flags + acciones |
-| Campaign Advisor | `ai/campaign-advisor.ts` | sugerencias estacionales + IA |
-| Order Predictor | `ai/order-predictor.ts` | tratamientos probables por paciente |
-| Retention Engine | `ai/retention-engine.ts` | churn risk + retención + CRM report |
-
-### Automation Rule Engine
-- `dispatchTrigger(clinicId, trigger, entityId, data)` — evalúa reglas activas
-- Condiciones: `eq/neq/gt/gte/lt/lte/contains/in/exists` (AND lógico)
-- Acciones: email · whatsapp · sms · create_task · update_lead · webhook · wait
-- Cooldown + max firings por entidad
-
-### WhatsApp
-- `WHATSAPP_TOKEN + WHATSAPP_PHONE_ID` → Meta Cloud API v19
-- Sin credenciales → MockWhatsAppService (log to console)
-- `WA_TEMPLATES.*` en `src/services/whatsapp/index.ts`
-- Webhook verification: `GET /api/v1/notifications/whatsapp?hub.mode=subscribe`
-
-### Agent Task Queue (`/api/v1/ai/tasks`)
-Preparado para arquitectura agéntica futura. Tasks `qualify_lead` y `suggest_campaigns` se ejecutan síncronamente inline. El resto queda en cola `status=queued` para un worker externo.
-
-### Env vars AI
-```
-ANTHROPIC_API_KEY          ← activa Claude para todos los engines
-WHATSAPP_TOKEN             ← Meta Cloud API token
-WHATSAPP_PHONE_ID          ← WhatsApp Business phone ID
-WHATSAPP_VERIFY_TOKEN      ← secret para verificación webhook Meta
-```
+- `src/lib/mock-users.ts` → sustituir por query DB
+- `src/lib/mock-clinics.ts` → sustituir por query DB
+- `src/lib/db.ts` → stub cliente Neon (no conectado)
+- Todos los `*-store.ts` en `src/modules/` → swap a Neon queries
+- `authService` → swap `MockAuthService` → `ApiAuthService`
 
 ---
 
-## Alcance Funcional
+## WhatsApp + Automatización
 
-Ver `src/docs/skills.md` — fuente de verdad para el mapa de features.
+```
+WHATSAPP_TOKEN + WHATSAPP_PHONE_ID → Meta Cloud API v19
+Sin credenciales → MockWhatsAppService (console.log)
+WHATSAPP_VERIFY_TOKEN → secret para webhook verification
+```
+
+Disparador: `dispatchTrigger(clinicId, trigger, entityId, data)` en `src/services/automation/rule-engine.ts`
+
+---
+
+## Escalabilidad multi-país
+
+- Locale: `useLocale()` → `'es' | 'en' | 'pt'` (lazy init desde cookie)
+- Moneda: todo en EUR cents internamente; formatear con `Intl.NumberFormat`
+- Subdomain por tenant: `{clinicId}.orthonoba.app`
+- JWT edge-safe (jose) — compatible con Cloudflare Workers / Vercel Edge
+
+---
+
+## Tipos — reglas
+
+- `src/types/orders.ts` ✓ — `src/types/order.ts` ✗ (OBSOLETO)
+- Preferir `interface` sobre `type` para entidades
+- Nunca `any` — usar `unknown` + narrowing
+- Tipos de `src/types/dashboard.ts`: `ClinicDashboard`, `LabDashboard`, `FinanceDashboard`, `ExecutiveReport`, `KPIValue`, `MRRBreakdown`

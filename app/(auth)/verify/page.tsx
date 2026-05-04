@@ -24,18 +24,17 @@ export default function VerifyPage() {
     toast.success('Email verificado correctamente')
   }
 
-  useEffect(() => {
-    if (otp.every((d) => d !== '')) {
-      void handleVerify()
-    }
-  }, [otp]) // eslint-disable-line react-hooks/exhaustive-deps
-
   function handleChange(i: number, val: string) {
     if (!/^\d*$/.test(val)) return
     const next = [...otp]
     next[i] = val.slice(-1)
     setOtp(next)
-    if (val && i < 5) refs.current[i + 1]?.focus()
+    if (val && i < 5) {
+      refs.current[i + 1]?.focus()
+    } else if (val && i === 5 && next.every((d) => d !== '')) {
+      // Last digit filled — auto-submit outside of render cycle
+      setTimeout(() => { void handleVerify() }, 0)
+    }
   }
 
   function handleKeyDown(i: number, e: React.KeyboardEvent) {
@@ -80,7 +79,6 @@ export default function VerifyPage() {
         ))}
       </div>
 
-      {/* Loading indicator */}
       {loading && (
         <div className="flex items-center justify-center gap-2 text-sm text-slate-400 mb-4">
           <span className="w-4 h-4 border-2 border-sky-500/40 border-t-sky-500 rounded-full animate-spin" />
@@ -88,7 +86,6 @@ export default function VerifyPage() {
         </div>
       )}
 
-      {/* Resend */}
       <div className="text-center">
         {canResend ? (
           <button onClick={handleResend} className="flex items-center gap-2 text-sm text-sky-400 hover:text-sky-300 mx-auto transition">
