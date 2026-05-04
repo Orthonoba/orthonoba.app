@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server'
 import { PLANS, getPlansForTenantType, getAnnualSavings } from '@/src/config/plans'
 import { ok } from '@/src/types/api'
 import type { TenantType } from '@/src/types/clinic'

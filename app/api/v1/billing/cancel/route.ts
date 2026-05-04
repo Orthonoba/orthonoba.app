@@ -57,7 +57,7 @@ export const POST = withTenant(async (req, { tenant, session }) => {
     const result = await cancelSubscription(subscription.stripeSubscriptionId, !atPeriodEnd)
 
     // Distinguish between Subscription (cancel at period end) and DeletedSubscription (immediate)
-    const isCancelled = (result as Stripe.Subscription).status === 'canceled'
+    const _isCancelled = (result as Stripe.Subscription).status === 'canceled'
       || !('cancel_at_period_end' in result)
 
     const periodEnd = 'items' in result

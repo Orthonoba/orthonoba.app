@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Users, TrendingUp, Calendar, Kanban, DollarSign, Phone, Target, Activity } from 'lucide-react'
+import { Users, TrendingUp, Calendar, Kanban, DollarSign, Phone, Target } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'CRM — Orthonoba' }
 

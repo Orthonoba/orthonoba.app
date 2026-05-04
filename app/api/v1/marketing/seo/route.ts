@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { createSeoPageSchema } from '@/src/modules/marketing/validators'
 import { createSeoPage, listSeoPages } from '@/src/modules/marketing/campaign-store'
-import { buildDentistSchema } from '@/src/config/marketing'
+
 import { ok, fail, HTTP_STATUS } from '@/src/types/api'
 
 // GET /api/v1/marketing/seo

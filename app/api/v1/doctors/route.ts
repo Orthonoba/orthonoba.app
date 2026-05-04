@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { createDoctorProfileSchema } from '@/src/modules/doctors/validators'
 import { mockDoctors } from '@/src/lib/mock-doctors'
-import { ok, fail, paginated, HTTP_STATUS } from '@/src/types/api'
+import { fail, paginated, HTTP_STATUS } from '@/src/types/api'
 import type { DoctorProfile } from '@/src/types/doctor'
 
 // GET /api/v1/doctors — list doctors in this clinic
@@ -29,7 +29,7 @@ export const GET = withTenant(async (req, { tenant }) => {
 })
 
 // POST /api/v1/doctors — create doctor profile (clinic_admin only)
-export const POST = withTenant(async (req, { session, tenant }) => {
+export const POST = withTenant(async (req, { session, tenant: _tenant }) => {
   if (!['super_admin', 'clinic_admin'].includes(session.role)) {
     return NextResponse.json(fail('FORBIDDEN', 'Solo administradores pueden registrar doctores.'), {
       status: HTTP_STATUS.FORBIDDEN,

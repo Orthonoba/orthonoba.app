@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { withAuth } from '@/src/middleware/with-auth'
 import { ok } from '@/src/types/api'
 import { authService } from '@/src/lib/auth-service'

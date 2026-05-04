@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { withAuth } from '@/src/middleware/with-auth'
 import { mockClinics } from '@/src/lib/mock-clinics'
-import { ok, fail, paginated, HTTP_STATUS } from '@/src/types/api'
+import { fail, paginated, HTTP_STATUS } from '@/src/types/api'
 import type { Clinic } from '@/src/types/clinic'
 
 // GET /api/v1/labs — list all labs
@@ -9,7 +9,7 @@ import type { Clinic } from '@/src/types/clinic'
 export const GET = withAuth(async (req, { session }) => {
   const { searchParams } = new URL(req.url)
   const country = searchParams.get('country')
-  const capability = searchParams.get('capability')
+  const _capability = searchParams.get('capability')
 
   let labs = mockClinics.filter((c) => c.type === 'lab' && c.isActive)
 

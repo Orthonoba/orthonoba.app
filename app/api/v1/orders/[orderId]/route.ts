@@ -1,16 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { updateOrderStatusSchema } from '@/src/modules/orders/validators'
-import { ok, fail, HTTP_STATUS } from '@/src/types/api'
+import { fail, HTTP_STATUS } from '@/src/types/api'
 
 type Params = { orderId: string }
 
-export const GET = withTenant<Params>(async (_req, { params, tenant }) => {
+export const GET = withTenant<Params>(async (_req, { params: _params, tenant: _tenant }) => {
   // TODO: IOrderRepository.findById(tenant.clinicId, params.orderId)
   return NextResponse.json(fail('NOT_FOUND', 'Orden no encontrada.'), { status: HTTP_STATUS.NOT_FOUND })
 })
 
-export const PATCH = withTenant<Params>(async (req, { params, session }) => {
+export const PATCH = withTenant<Params>(async (req, { params: _params, session: _session }) => {
   const body = await req.json().catch(() => null)
   const parsed = updateOrderStatusSchema.safeParse(body)
 

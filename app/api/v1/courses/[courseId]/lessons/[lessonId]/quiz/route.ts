@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
-import { createQuizSchema, submitQuizSchema } from '@/src/modules/academy/validators'
-import { getLesson, saveQuiz, getQuizByLesson } from '@/src/modules/academy/course-store'
-import { getEnrollment, submitQuizAttempt } from '@/src/modules/academy/enrollment-store'
+import { createQuizSchema } from '@/src/modules/academy/validators'
+import { saveQuiz, getQuizByLesson } from '@/src/modules/academy/course-store'
+import { getEnrollment } from '@/src/modules/academy/enrollment-store'
 import { ok, fail, HTTP_STATUS } from '@/src/types/api'
 
 type Params = { courseId: string; lessonId: string }

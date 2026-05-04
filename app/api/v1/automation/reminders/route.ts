@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { createReminderSchema } from '@/src/modules/automation/validators'
-import { listReminders, saveReminder, cancelReminder } from '@/src/modules/automation/automation-store'
+import { listReminders, saveReminder } from '@/src/modules/automation/automation-store'
 import { dispatchDueReminders } from '@/src/services/automation/reminder-service'
 import { ok, fail, paginated, HTTP_STATUS } from '@/src/types/api'
 import type { SmartReminder } from '@/src/types/automation'

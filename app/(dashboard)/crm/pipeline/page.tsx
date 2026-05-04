@@ -1,5 +1,5 @@
 'use client'
-import type { Metadata } from 'next'
+
 import { useState } from 'react'
 import { DollarSign, Plus } from 'lucide-react'
 import { toast } from 'sonner'

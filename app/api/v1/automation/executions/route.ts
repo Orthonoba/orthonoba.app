@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { listExecutions } from '@/src/modules/automation/automation-store'
-import { ok, fail, paginated, HTTP_STATUS } from '@/src/types/api'
+import { fail, paginated, HTTP_STATUS } from '@/src/types/api'
 import type { AutomationExecution } from '@/src/types/automation'
 
 // GET /api/v1/automation/executions?ruleId=&status=&limit=

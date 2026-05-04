@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { enqueueTaskSchema } from '@/src/modules/automation/validators'
-import { enqueueTask, listTasks, getTask, updateTaskStatus } from '@/src/modules/automation/automation-store'
+import { enqueueTask, listTasks, updateTaskStatus } from '@/src/modules/automation/automation-store'
 import { ok, fail, paginated, HTTP_STATUS } from '@/src/types/api'
 import type { AgentTask } from '@/src/types/automation'
 

@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server'
 import { getCertificateByVerificationId, getCertificate } from '@/src/modules/academy/enrollment-store'
 import { getCertificateVerifyUrl } from '@/src/config/academy'
 import { ok, fail } from '@/src/types/api'

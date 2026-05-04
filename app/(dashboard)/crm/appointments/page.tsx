@@ -1,7 +1,7 @@
 'use client'
-import type { Metadata } from 'next'
+
 import { useState } from 'react'
-import { Calendar, Plus, Clock, User, Building2, Check, X, Phone } from 'lucide-react'
+import { Plus, Clock, User, Building2, Check, X, Phone } from 'lucide-react'
 import { toast } from 'sonner'
 
 const APPOINTMENTS = [

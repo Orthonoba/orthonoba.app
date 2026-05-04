@@ -7,7 +7,7 @@ import { z } from 'zod'
 type Params = { leadId: string }
 
 // GET — return current score
-export const GET = withTenant<Params>(async (_req, { params, tenant }) => {
+export const GET = withTenant<Params>(async (_req, { params, tenant: _tenant }) => {
   const score = await getLeadScore(params.leadId)
   return NextResponse.json(ok(score))
 })

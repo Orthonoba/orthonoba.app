@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { getCourse, getInstructorByUserId } from '@/src/modules/academy/course-store'
 import { listCourseStudents, getCourseProgress } from '@/src/modules/academy/enrollment-store'
-import { ok, fail, paginated, HTTP_STATUS } from '@/src/types/api'
-import type { CourseEnrollment } from '@/src/types/academy'
+import { fail, paginated, HTTP_STATUS } from '@/src/types/api'
+
 
 type Params = { courseId: string }
 

@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+
+import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { sendWhatsAppSchema } from '@/src/modules/automation/validators'
 import { getWhatsAppService } from '@/src/services/whatsapp/index'
 import { saveWhatsAppMessage, updateWhatsAppStatus } from '@/src/modules/automation/automation-store'
 import { ok, fail, HTTP_STATUS } from '@/src/types/api'
-import { z } from 'zod'
+
 
 // POST /api/v1/notifications/whatsapp — send WhatsApp message
 export const POST = withTenant(async (req, { tenant, session }) => {

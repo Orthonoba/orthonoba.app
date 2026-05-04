@@ -4,13 +4,12 @@ import { getSubscriptionByTenantId } from '@/src/modules/billing/subscription-st
 import { getMarketingKPIs, listCampaigns } from '@/src/modules/marketing/campaign-store'
 import { listLeads } from '@/src/modules/marketing/lead-store'
 import {
-  calculateCAC, calculateLTV, calculateChurn, calculateMRR, calculateROAS,
-  compare, toKPIValue, buildConversionFunnel, calculateProductionTime,
+  calculateROAS, toKPIValue,
 } from '@/src/services/dashboard/kpi-calculator'
-import { getPlan, TOKEN_ALLOCATIONS } from '@/src/config/plans'
+import { getPlan } from '@/src/config/plans'
 import { currentPeriod } from '@/src/modules/dashboard/dashboard-store'
 import { ok, fail, HTTP_STATUS } from '@/src/types/api'
-import type { NamedKPI, KPIPickerResult, KPIValue } from '@/src/types/dashboard'
+import type { NamedKPI, KPIPickerResult } from '@/src/types/dashboard'
 
 const AVAILABLE_KPIS: NamedKPI[] = [
   'cac', 'ltv', 'mrr', 'arr', 'churn',

@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server'
 import { funnelSubmitSchema } from '@/src/modules/marketing/validators'
 import { getFunnel, recordFunnelSubmission } from '@/src/modules/marketing/campaign-store'
 import { createLead } from '@/src/modules/marketing/lead-store'

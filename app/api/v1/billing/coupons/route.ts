@@ -6,7 +6,7 @@ import { getSubscriptionByTenantId } from '@/src/modules/billing/subscription-st
 import { ok, fail, HTTP_STATUS } from '@/src/types/api'
 
 // GET /api/v1/billing/coupons?code=XX&plan=growth — validate a coupon code
-export const GET = withTenant(async (req, { tenant }) => {
+export const GET = withTenant(async (req, { tenant: _tenant }) => {
   const { searchParams } = new URL(req.url)
   const parsed = validateCouponSchema.safeParse({
     code: searchParams.get('code'),

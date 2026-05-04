@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { createCaseSchema } from '@/src/modules/cases/validators'
 import { mockCases } from '@/src/lib/mock-cases'
-import { ok, fail, paginated, HTTP_STATUS } from '@/src/types/api'
+import { fail, paginated, HTTP_STATUS } from '@/src/types/api'
 import type { DentalCase } from '@/src/types/case'
 
 // GET /api/v1/cases

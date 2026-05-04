@@ -4,7 +4,7 @@ import { getSubscriptionByTenantId } from '@/src/modules/billing/subscription-st
 import { getSubscription as getStripeSubscription } from '@/src/services/stripe/billing'
 import { getPlan, TOKEN_ALLOCATIONS } from '@/src/config/plans'
 import { ok, fail, HTTP_STATUS } from '@/src/types/api'
-import type { Subscription } from '@/src/types/billing'
+
 
 // GET /api/v1/billing/subscriptions — current subscription with plan details
 export const GET = withTenant(async (_req, { tenant, session }) => {

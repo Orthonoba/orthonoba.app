@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { createReferralProgramSchema } from '@/src/modules/marketing/validators'
-import { createReferralProgram, listReferralPrograms, generateReferralLink } from '@/src/modules/marketing/campaign-store'
+import { createReferralProgram, listReferralPrograms } from '@/src/modules/marketing/campaign-store'
 import { ok, fail, HTTP_STATUS } from '@/src/types/api'
-import { z } from 'zod'
+
 
 export const GET = withTenant(async (_req, { tenant }) => {
   const programs = await listReferralPrograms(tenant.clinicId)

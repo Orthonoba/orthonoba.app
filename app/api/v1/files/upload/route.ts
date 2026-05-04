@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { storageService, STORAGE_BUCKETS, buildFilePath } from '@/src/services/storage'
 import { MIME_TYPE_MAP, MAX_FILE_SIZES } from '@/src/modules/files/service'
 import { ok, fail, HTTP_STATUS } from '@/src/types/api'
 
-const MAX_REQUEST_SIZE = 1024 * 1024 * 1024 // 1 GB
+const _MAX_REQUEST_SIZE = 1024 * 1024 * 1024 // 1 GB
 
-export const POST = withTenant(async (req, { tenant, session }) => {
+export const POST = withTenant(async (req, { tenant, session: _session }) => {
   const formData = await req.formData().catch(() => null)
   if (!formData) {
     return NextResponse.json(fail('VALIDATION_ERROR', 'Invalid form data.'), {

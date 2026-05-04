@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { withAuth } from '@/src/middleware/with-auth'
 import { getClinicById } from '@/src/lib/mock-clinics'
 import { updateClinicSchema } from '@/src/modules/clinic/validators'

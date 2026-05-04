@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { TrendingUp, Plus, Star } from 'lucide-react'
+import { Plus, Star } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Leads CRM — Orthonoba' }
 

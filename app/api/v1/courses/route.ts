@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { createCourseSchema } from '@/src/modules/academy/validators'
 import { createCourse, listCourses, getInstructorByUserId } from '@/src/modules/academy/course-store'

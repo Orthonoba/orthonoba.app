@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { getClinicDashboard } from '@/src/services/dashboard/clinic-dashboard'
 import { getLabDashboard } from '@/src/services/dashboard/lab-dashboard'
-import { getFinanceDashboard } from '@/src/services/dashboard/finance-dashboard'
+
 import { getExecutiveReport } from '@/src/services/dashboard/executive-report'
 import { listLeads } from '@/src/modules/marketing/lead-store'
 import { listReminders } from '@/src/modules/automation/automation-store'
-import { getAcademyDashboard, listUserEnrollments } from '@/src/modules/academy/enrollment-store'
+import { getAcademyDashboard } from '@/src/modules/academy/enrollment-store'
 import { listInstructors, listCourses } from '@/src/modules/academy/course-store'
 import { currentPeriod } from '@/src/modules/dashboard/dashboard-store'
 import { ok, fail, HTTP_STATUS } from '@/src/types/api'
@@ -34,7 +34,7 @@ export const GET = withTenant(async (req, { tenant, session }) => {
     }
 
     case 'doctor': {
-      const [leadsResult, reminders, academyKPIs] = await Promise.all([
+      const [_leadsResult, reminders, academyKPIs] = await Promise.all([
         listLeads(tenant.clinicId, { limit: 50 }),
         listReminders(tenant.clinicId),
         getAcademyDashboard(session.userId),

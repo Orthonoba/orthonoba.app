@@ -5,7 +5,7 @@ import {
   getCourseProgress, getAcademyDashboard,
 } from '@/src/modules/academy/enrollment-store'
 import { getCourse } from '@/src/modules/academy/course-store'
-import { ok, fail, HTTP_STATUS } from '@/src/types/api'
+import { ok } from '@/src/types/api'
 
 // GET /api/v1/courses/my — my enrollments, certificates, and dashboard KPIs
 export const GET = withTenant(async (req, { session }) => {

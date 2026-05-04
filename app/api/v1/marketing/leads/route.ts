@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { createLeadSchema } from '@/src/modules/marketing/validators'
 import { createLead, listLeads } from '@/src/modules/marketing/lead-store'

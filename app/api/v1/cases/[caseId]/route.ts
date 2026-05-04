@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
-import { updateCaseSchema, transitionStatusSchema, cancelCaseSchema } from '@/src/modules/cases/validators'
+import { updateCaseSchema } from '@/src/modules/cases/validators'
 import { getCaseById } from '@/src/lib/mock-cases'
 import { ok, fail, HTTP_STATUS } from '@/src/types/api'
 
 type Params = { caseId: string }
 
 // GET /api/v1/cases/[caseId]
-export const GET = withTenant<Params>(async (_req, { params, session, tenant }) => {
+export const GET = withTenant<Params>(async (_req, { params: _params, session, tenant: _tenant }) => {
   const dentalCase = getCaseById(params.caseId)
 
   if (!dentalCase || dentalCase.clinicId !== tenant.clinicId) {
@@ -51,7 +51,7 @@ export const PATCH = withTenant<Params>(async (req, { params, session, tenant })
 })
 
 // DELETE /api/v1/cases/[caseId] — admin-only cancel/archive
-export const DELETE = withTenant<Params>(async (_req, { params, session, tenant }) => {
+export const DELETE = withTenant<Params>(async (_req, { params: _params, session, tenant: _tenant }) => {
   if (!['super_admin', 'clinic_admin'].includes(session.role)) {
     return NextResponse.json(fail('FORBIDDEN', 'Solo administradores.'), { status: HTTP_STATUS.FORBIDDEN })
   }

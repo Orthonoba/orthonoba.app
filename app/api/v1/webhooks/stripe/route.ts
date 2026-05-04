@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server'
 import { verifyWebhookSignature, dispatchWebhookEvent } from '@/src/services/stripe/webhooks'
 import { ok, fail, HTTP_STATUS } from '@/src/types/api'
 

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { updateDoctorProfileSchema } from '@/src/modules/doctors/validators'
 import { getDoctorProfileById } from '@/src/lib/mock-doctors'
@@ -51,7 +51,7 @@ export const PATCH = withTenant<Params>(async (req, { params, session, tenant })
 })
 
 // DELETE /api/v1/doctors/[doctorId] — deactivate (clinic_admin only)
-export const DELETE = withTenant<Params>(async (_req, { params, session, tenant }) => {
+export const DELETE = withTenant<Params>(async (_req, { params: _params, session, tenant: _tenant }) => {
   if (!['super_admin', 'clinic_admin'].includes(session.role)) {
     return NextResponse.json(fail('FORBIDDEN', 'Solo administradores.'), { status: HTTP_STATUS.FORBIDDEN })
   }
