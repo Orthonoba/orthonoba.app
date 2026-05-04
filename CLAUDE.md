@@ -265,6 +265,42 @@ Disparador: `dispatchTrigger(clinicId, trigger, entityId, data)` en `src/service
 
 ---
 
+## Meta Lead Ads Webhook
+
+Endpoint: `app/api/v1/webhooks/meta/route.ts`
+
+```
+GET  /api/v1/webhooks/meta  → verificación Meta (hub.mode + hub.verify_token + hub.challenge)
+POST /api/v1/webhooks/meta  → recibir leads de Facebook Ads / Instagram Ads
+```
+
+**Flujo de lead entrante:**
+1. Meta POST → verificar `X-Hub-Signature-256` con `META_APP_SECRET`
+2. Extraer `field_data[]` (full_name, email, phone_number)
+3. Deduplicación por email via `listLeads(clinicId, { search: email })`
+4. `createLead()` → `src/modules/marketing/lead-store.ts` (status: `'new'`, source: `'facebook'`)
+5. `dispatchTrigger(clinicId, 'lead.created', ...)` → activa reglas de automatización
+
+**Env vars:**
+```
+META_VERIFY_TOKEN       → token que Meta valida en GET
+META_APP_SECRET         → firma HMAC-SHA256 de cada POST (vacío = skip en dev)
+META_ACCESS_TOKEN       → para llamar Graph API (no usado aún)
+META_DEFAULT_CLINIC_ID  → clinicId destino hasta que haya mapeo page_id → clinic en DB
+```
+
+**Field aliases soportados:**
+- Nombre: `full_name`, `name`, `nombre`, `first_name`, `nombre_completo`
+- Email: `email`, `correo`, `email_address`
+- Teléfono: `phone_number`, `phone`, `telefono`, `mobile`, `celular`
+
+**Pendiente (swap point):**
+- Mapeo `page_id → clinicId` en DB para soporte multi-tenant real
+- Llamada a Graph API para obtener placement (FB vs IG) y actualizar `source`
+- WhatsApp welcome message en `handleNewLead()`
+
+---
+
 ## Escalabilidad multi-país
 
 - Locale: `useLocale()` → `'es' | 'en' | 'pt'` (lazy init desde cookie)
