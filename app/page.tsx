@@ -1,5 +1,6 @@
 import Navbar from '@/components/navbar'
 import Hero from '@/components/hero'
+import Footer from '@/components/footer'
 
 export default function HomePage() {
   return (
@@ -8,6 +9,7 @@ export default function HomePage() {
       <main>
         <Hero />
       </main>
+      <Footer />
     </>
   )
 }

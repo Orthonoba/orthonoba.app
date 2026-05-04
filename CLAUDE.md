@@ -4,6 +4,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Routing Structure — Placeholder Pages
+
+Páginas placeholder creadas (solo routing, sin lógica de negocio):
+
+| Ruta URL | Archivo |
+|----------|---------|
+| `/orders/new` | `app/(dashboard)/orders/new/page.tsx` |
+| `/stl-upload` | `app/(dashboard)/stl-upload/page.tsx` |
+| `/stl-library` | `app/(dashboard)/stl-library/page.tsx` |
+| `/cad-design` | `app/(dashboard)/cad-design/page.tsx` |
+| `/cad-design/exocad` | `app/(dashboard)/cad-design/exocad/page.tsx` |
+| `/cad-design/jobs` | `app/(dashboard)/cad-design/jobs/page.tsx` |
+| `/marketing` | `app/(dashboard)/marketing/page.tsx` |
+| `/marketing/whatsapp` | `app/(dashboard)/marketing/whatsapp/page.tsx` |
+| `/marketing/email` | `app/(dashboard)/marketing/email/page.tsx` |
+| `/settings/team` | `app/(dashboard)/settings/team/page.tsx` |
+| `/ai-automation` | `app/(dashboard)/ai-automation/page.tsx` |
+| `/ai-automation/workflows` | `app/(dashboard)/ai-automation/workflows/page.tsx` |
+| `/ai-automation/n8n` | `app/(dashboard)/ai-automation/n8n/page.tsx` |
+| `/ai-automation/agents` | `app/(dashboard)/ai-automation/agents/page.tsx` |
+| `/cases/files` | `app/(dashboard)/cases/files/page.tsx` |
+| `/pricing` | `app/pricing/page.tsx` (pública, sin route group) |
+
+**Notas:**
+- Todas las páginas `(dashboard)` heredan el layout con sidebar/topbar desde `app/(dashboard)/layout.tsx`
+- `app/marketing/page.tsx` (que retornaba `null`) fue eliminado para evitar conflicto de rutas
+- `marketing/leads/page.tsx` ya existía con contenido real (Kanban) — no modificada
+- `components/footer.tsx` creado con links a las 4 páginas legales
+- Footer integrado en `app/page.tsx` (home pública)
+
+---
+
 ## UI Minimal Layer (Home)
 
 Archivos creados (solo estructura visual base, sin lógica de negocio):
@@ -18,6 +50,33 @@ Archivos creados (solo estructura visual base, sin lógica de negocio):
 **Decisión arquitectónica:** Navbar está en `app/page.tsx` (no en `app/layout.tsx`) para no afectar el dashboard (`app/(dashboard)/layout.tsx`) ni la auth (`app/(auth)/layout.tsx`), que tienen sus propios layouts de pantalla completa.
 
 **Backend-first continúa:** Esta capa de presentación no toca lógica de negocio, APIs, ni stores. Es solo la fachada mínima del home público.
+
+---
+
+## Dashboard UI Layer
+
+Capa visual profesional tipo SaaS para `/dashboard`. **Solo presentación — sin lógica de negocio, sin fetch, sin estado global.**
+
+| Archivo | Propósito |
+|---|---|
+| `components/dashboard/sidebar.tsx` | Sidebar fija izquierda · `'use client'` · `usePathname` para active state · 10 links estáticos |
+| `components/dashboard/topbar.tsx` | Header superior · título + placeholder usuario "Admin" |
+| `components/dashboard/stat-card.tsx` | KPI card reutilizable · props: `label`, `value`, `sub`, `trend`, `color` |
+| `components/dashboard/activity-feed.tsx` | Feed de actividad reciente · datos hardcoded · lista con dot-indicator |
+| `components/dashboard/recent-orders.tsx` | Tabla de órdenes recientes · datos hardcoded · badge de estado por color |
+| `app/dashboard/layout.tsx` | Layout `/dashboard` · mantiene `verifySession()` + `StoreHydrator` (seguridad) · usa nuevos componentes visuales |
+| `app/dashboard/page.tsx` | Página principal hardcoded · grid: KPIs arriba · RecentOrders + ActivityFeed abajo |
+
+**Datos hardcoded de ejemplo:**
+- 124 pacientes · 32 casos activos · €12,400 revenue · 18 nuevos leads
+- 5 órdenes recientes con estados (En producción / Revisión / Completado / Pendiente)
+- 5 entradas de actividad (paciente registrado / orden creada / STL subido / lead Meta / factura)
+
+**Preparado para integrar con:**
+- CRM → swap `activity-feed` con feed real de `src/modules/marketing/lead-store`
+- Orders → swap `recent-orders` con query a `src/modules/orders`
+- KPIs → swap `stat-card` hardcoded con datos de `src/services/dashboard/*`
+- AI → añadir badge de estado IA desde `isAIEnabled()` en topbar
 
 ---
 
