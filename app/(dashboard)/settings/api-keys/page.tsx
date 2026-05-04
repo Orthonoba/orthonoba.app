@@ -17,6 +17,7 @@ export default function ApiKeysPage() {
   const [selectedPerms, setSelectedPerms] = useState<string[]>(['read:all'])
   const [newKey, setNewKey] = useState<string | null>(null)
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({})
+  const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null)
 
   function handleCreate() {
     if (!newKeyName.trim()) { toast.error('Introduce un nombre para la key'); return }
@@ -33,8 +34,13 @@ export default function ApiKeysPage() {
   }
 
   function handleRevoke(id: string) {
-    if (!window.confirm('¿Revocar esta API Key? Esta acción no se puede deshacer.')) return
-    setKeys((prev) => prev.filter((k) => k.id !== id))
+    setConfirmRevokeId(id)
+  }
+
+  function confirmRevoke() {
+    if (!confirmRevokeId) return
+    setKeys((prev) => prev.filter((k) => k.id !== confirmRevokeId))
+    setConfirmRevokeId(null)
     toast.success('API Key revocada')
   }
 
@@ -53,6 +59,24 @@ export default function ApiKeysPage() {
           <Plus className="w-4 h-4" /> Nueva key
         </button>
       </div>
+
+      {/* Revoke confirm dialog */}
+      {confirmRevokeId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-2">¿Revocar API Key?</h3>
+            <p className="text-slate-400 text-sm mb-6">Esta acción es irreversible. Las integraciones que usen esta key dejarán de funcionar inmediatamente.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmRevokeId(null)} className="flex-1 border border-slate-600 hover:border-slate-500 text-slate-300 rounded-lg py-2.5 text-sm font-medium transition">
+                Cancelar
+              </button>
+              <button onClick={confirmRevoke} className="flex-1 bg-red-500 hover:bg-red-400 text-white rounded-lg py-2.5 text-sm font-semibold transition">
+                Revocar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* New key alert */}
       {newKey && (

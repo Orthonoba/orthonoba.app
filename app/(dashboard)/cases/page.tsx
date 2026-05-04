@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import Link from 'next/link'
 import { Search, Filter, LayoutGrid, Table2, Plus, Eye, Pencil, Trash2, ChevronDown, Clock, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 interface DentalCase {
@@ -69,18 +70,17 @@ const TYPES = ['Todos los tipos', 'Retenedor Essix', 'Ortodoncia', 'Protector Bu
 const PRIORITIES = ['Todas', 'Alta', 'Media', 'Baja']
 
 export default function CasesPage() {
-  const [view, setView] = useState<'table' | 'kanban'>('table')
+  const [view, setView] = useState<'table' | 'kanban'>(() => {
+    if (typeof window === 'undefined') return 'table'
+    const saved = localStorage.getItem('cases-view')
+    return saved === 'kanban' ? 'kanban' : 'table'
+  })
   const [search, setSearch] = useState('')
   const [clinic, setClinic] = useState('Todas las clínicas')
   const [status, setStatus] = useState('Todos')
   const [type, setType] = useState('Todos los tipos')
   const [priority, setPriority] = useState('Todas')
   const [showFilters, setShowFilters] = useState(false)
-
-  useEffect(() => {
-    const saved = localStorage.getItem('cases-view')
-    if (saved === 'kanban' || saved === 'table') setView(saved)
-  }, [])
 
   const toggleView = (v: 'table' | 'kanban') => {
     setView(v)
@@ -122,9 +122,9 @@ export default function CasesPage() {
                 <LayoutGrid className="w-4 h-4" /> Kanban
               </button>
             </div>
-            <a href="/cases/new" className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-medium px-4 py-2.5 rounded-lg transition text-sm">
+            <Link href="/cases/new" className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-medium px-4 py-2.5 rounded-lg transition text-sm">
               <Plus className="w-4 h-4" /> Nuevo Caso
-            </a>
+            </Link>
           </div>
         </div>
 

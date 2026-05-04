@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Save, AlertTriangle, Building2, Phone, Mail, MapPin, Globe } from 'lucide-react'
+import { toast } from 'sonner'
 
 const INITIAL = {
   name: 'Clínica Dental Providencia',
@@ -31,7 +32,7 @@ export default function ClinicSettingsPage() {
 
   const handleArchive = () => {
     if (archiveText === 'ARCHIVAR') {
-      alert('Clínica archivada (mock)')
+      toast.success('Clínica archivada correctamente')
       setConfirmArchive(false)
       setArchiveText('')
     }

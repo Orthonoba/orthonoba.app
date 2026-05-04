@@ -34,11 +34,12 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1)
   const [plan, setPlan] = useState('growth')
   const [showPass, setShowPass] = useState(false)
-  const [data1, setData1] = useState<Step1 | null>(null)
-  const [data2, setData2] = useState<Step2 | null>(null)
+  const [_data1, setData1] = useState<Step1 | null>(null)
+  const [_data2, setData2] = useState<Step2 | null>(null)
 
   const form1 = useForm<Step1>({ resolver: zodResolver(step1Schema) })
   const form2 = useForm<Step2>({ resolver: zodResolver(step2Schema), defaultValues: { type: 'clinic', country: 'España' } })
+  const selectedType = form2.watch('type')
 
   function onStep1(d: Step1) { setData1(d); setStep(2) }
   function onStep2(d: Step2) { setData2(d); setStep(3) }
@@ -133,7 +134,7 @@ export default function RegisterPage() {
             <label className="text-sm text-slate-300 mb-2 block">Tipo de organización</label>
             <div className="grid grid-cols-3 gap-2">
               {(['clinic', 'lab', 'academy'] as const).map((t) => (
-                <label key={t} className={['flex flex-col items-center gap-1 p-3 rounded-lg border cursor-pointer transition', form2.watch('type') === t ? 'border-sky-500 bg-sky-500/10 text-sky-400' : 'border-slate-600 text-slate-400 hover:border-slate-500'].join(' ')}>
+                <label key={t} className={['flex flex-col items-center gap-1 p-3 rounded-lg border cursor-pointer transition', selectedType === t ? 'border-sky-500 bg-sky-500/10 text-sky-400' : 'border-slate-600 text-slate-400 hover:border-slate-500'].join(' ')}>
                   <input type="radio" value={t} {...form2.register('type')} className="sr-only" />
                   <span className="text-xs font-medium capitalize">{t === 'clinic' ? 'Clínica' : t === 'lab' ? 'Lab' : 'Academia'}</span>
                 </label>

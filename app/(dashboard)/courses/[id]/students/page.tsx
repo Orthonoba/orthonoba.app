@@ -1,4 +1,4 @@
-import { Award, Download, Users } from 'lucide-react'
+import { Award, Download } from 'lucide-react'
 
 const STUDENTS = [
   { id: '1', name: 'María González', email: 'mgonzalez@clinicadental.es', progress: 100, lastActivity: 'hace 2 días', certified: true, avatar: 'MG', enrolled: '12 ene 2026' },
@@ -40,7 +40,7 @@ function ProgressBar({ value }: { value: number }) {
   )
 }
 
-export default function CourseStudentsPage({ params }: { params: { id: string } }) {
+export default function CourseStudentsPage() {
   const certified = STUDENTS.filter((s) => s.certified).length
   const avgProgress = Math.round(STUDENTS.reduce((acc, s) => acc + s.progress, 0) / STUDENTS.length)
   const completed = STUDENTS.filter((s) => s.progress === 100).length
@@ -61,11 +61,11 @@ export default function CourseStudentsPage({ params }: { params: { id: string } 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total estudiantes', value: STUDENTS.length, icon: Users, color: 'text-sky-400' },
-          { label: 'Completados', value: completed, icon: Award, color: 'text-emerald-400' },
-          { label: 'Certificados', value: certified, icon: Award, color: 'text-amber-400' },
-          { label: 'Progreso medio', value: `${avgProgress}%`, icon: Users, color: 'text-violet-400' },
-        ].map(({ label, value, icon: Icon, color }) => (
+          { label: 'Total estudiantes', value: STUDENTS.length, color: 'text-sky-400' },
+          { label: 'Completados', value: completed, color: 'text-emerald-400' },
+          { label: 'Certificados', value: certified, color: 'text-amber-400' },
+          { label: 'Progreso medio', value: `${avgProgress}%`, color: 'text-violet-400' },
+        ].map(({ label, value, color }) => (
           <div key={label} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
             <div className={`text-2xl font-bold ${color}`}>{value}</div>
             <div className="text-xs text-slate-400 mt-0.5">{label}</div>

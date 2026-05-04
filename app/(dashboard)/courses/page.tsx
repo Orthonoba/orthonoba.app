@@ -1,4 +1,4 @@
-import { BookOpen, Clock, Users, Star, Filter, Search, GraduationCap } from 'lucide-react'
+import { Clock, Users, Star, Filter, Search, GraduationCap } from 'lucide-react'
 
 const COURSES = [
   {

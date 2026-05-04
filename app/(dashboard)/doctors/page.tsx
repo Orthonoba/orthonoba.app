@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Stethoscope, Star, Briefcase, Building2 } from 'lucide-react'
+import { Star, Briefcase, Building2 } from 'lucide-react'
 
 const DOCTORS = [
   { id: '1', name: 'Dr. Carlos García López',    specialty: 'Ortodoncia',       clinic: 'Clínica Dental Norte', cases: 12, rating: 4.9, avatar: 'GL' },
@@ -53,7 +53,7 @@ export default function DoctorsPage() {
         {DOCTORS.map((doc) => (
           <Link key={doc.id} href={`/doctors/${doc.id}`} className="bg-slate-800 border border-slate-700 rounded-xl p-5 hover:border-sky-500/40 transition group">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-sky-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
+              <div className="w-12 h-12 rounded-full bg-linear-to-br from-sky-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
                 {doc.avatar}
               </div>
               <div className="min-w-0">

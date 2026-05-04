@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Bell, Mail, MessageSquare, Phone, Calendar, Plus } from 'lucide-react'
+import { Mail, MessageSquare, Phone, Calendar, Plus } from 'lucide-react'
 
 type Channel = 'email' | 'whatsapp' | 'sms'
 

@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { Package, Search, Filter, Truck } from 'lucide-react'
+import { Package, Search, Truck } from 'lucide-react'
 
 const ORDERS = [
   { id: 'ORD-001', clinic: 'Clínica Dental Norte',  type: 'Prótesis Fija',    lab: 'ProDent Lab',        status: 'delivered',   delivery: '2026-04-20', tracking: 'ES12345678' },

@@ -6,22 +6,29 @@ import { ShieldCheck, RefreshCw } from 'lucide-react'
 export default function VerifyPage() {
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [countdown, setCountdown] = useState(60)
-  const [canResend, setCanResend] = useState(false)
   const [loading, setLoading] = useState(false)
   const refs = useRef<(HTMLInputElement | null)[]>([])
 
+  const canResend = countdown <= 0
+
   useEffect(() => {
-    if (countdown <= 0) { setCanResend(true); return }
+    if (countdown <= 0) return
     const t = setTimeout(() => setCountdown((c) => c - 1), 1000)
     return () => clearTimeout(t)
   }, [countdown])
 
+  async function handleVerify() {
+    setLoading(true)
+    await new Promise((r) => setTimeout(r, 1000))
+    setLoading(false)
+    toast.success('Email verificado correctamente')
+  }
+
   useEffect(() => {
     if (otp.every((d) => d !== '')) {
-      handleVerify()
+      void handleVerify()
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [otp])
+  }, [otp]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleChange(i: number, val: string) {
     if (!/^\d*$/.test(val)) return
@@ -35,16 +42,8 @@ export default function VerifyPage() {
     if (e.key === 'Backspace' && !otp[i] && i > 0) refs.current[i - 1]?.focus()
   }
 
-  async function handleVerify() {
-    setLoading(true)
-    await new Promise((r) => setTimeout(r, 1000))
-    setLoading(false)
-    toast.success('Email verificado correctamente')
-  }
-
   function handleResend() {
     setCountdown(60)
-    setCanResend(false)
     setOtp(['', '', '', '', '', ''])
     toast.info('Nuevo código enviado')
     refs.current[0]?.focus()

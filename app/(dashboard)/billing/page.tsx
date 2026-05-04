@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CreditCard, FileText, History, Zap, Calendar, Tag, ArrowRight } from 'lucide-react'
+import { CreditCard, FileText, Zap, Calendar, Tag, ArrowRight } from 'lucide-react'
 
 const PLAN = { name: 'Growth', price: '€149', nextBilling: '2026-06-04', status: 'active', cycle: 'monthly', discount: null }
 

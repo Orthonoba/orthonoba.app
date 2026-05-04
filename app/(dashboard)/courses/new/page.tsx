@@ -1,7 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
-import { Plus, Trash2, Upload, ChevronUp, ChevronDown, BookOpen, ArrowLeft } from 'lucide-react'
+import { Plus, Trash2, Upload, ChevronUp, ChevronDown, ArrowLeft, BookOpen } from 'lucide-react'
 
 const CATEGORIES = ['Ortodoncia', 'CAD/CAM', 'Marketing', 'Implantología', 'Cirugía', 'Prótesis', 'Gestión Clínica', 'Radiología']
 const LEVELS = ['Básico', 'Intermedio', 'Avanzado']
@@ -23,6 +24,14 @@ export default function NewCoursePage() {
     { id: '1', title: 'Módulo 1: Introducción', lessons: ['Bienvenida al curso', 'Requisitos previos'] },
   ])
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
+
+  function handleThumbnail(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => setThumbnailPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -96,9 +105,9 @@ export default function NewCoursePage() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <a href="/courses" className="text-slate-400 hover:text-white transition">
+          <Link href="/courses" className="text-slate-400 hover:text-white transition">
             <ArrowLeft className="w-5 h-5" />
-          </a>
+          </Link>
           <div>
             <h1 className="text-2xl font-bold text-white">Crear nuevo curso</h1>
             <p className="text-slate-400 text-sm mt-0.5">Completa la información para publicar tu curso en la Academia Orthonoba</p>
@@ -248,9 +257,10 @@ export default function NewCoursePage() {
             {/* Thumbnail */}
             <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
               <h3 className="font-semibold text-white mb-3">Imagen del curso</h3>
-              <div className="aspect-video bg-slate-900 border-2 border-dashed border-slate-600 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-sky-500 transition group">
+              <label className="aspect-video bg-slate-900 border-2 border-dashed border-slate-600 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-sky-500 transition group overflow-hidden">
+                <input type="file" accept="image/*" className="sr-only" onChange={handleThumbnail} />
                 {thumbnailPreview ? (
-                  <img src={thumbnailPreview} alt="" className="w-full h-full object-cover rounded-xl" />
+                  <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
                 ) : (
                   <>
                     <Upload className="w-6 h-6 text-slate-500 group-hover:text-sky-400 transition" />
@@ -260,7 +270,7 @@ export default function NewCoursePage() {
                     </p>
                   </>
                 )}
-              </div>
+              </label>
             </div>
 
             {/* Course summary */}

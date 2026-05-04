@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { Phone, Mail, MapPin, Calendar, Briefcase, FileText, MessageSquare, Plus, Clock } from 'lucide-react'
+import { Phone, Mail, MapPin, Briefcase, FileText, MessageSquare, Plus, Clock } from 'lucide-react'
 
 const PATIENT = {
   id: '1', name: 'María González Ruiz', age: 34, clinic: 'Clínica Dental Norte',

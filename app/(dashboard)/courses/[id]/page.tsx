@@ -1,4 +1,4 @@
-import { Clock, Users, Star, Award, Play, FileText, BarChart2, Settings, CheckCircle2, Lock } from 'lucide-react'
+import { Clock, Users, Star, Award, Play, CheckCircle2, Lock } from 'lucide-react'
 
 const COURSE = {
   id: '1',
