@@ -4,6 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## UI Minimal Layer (Home)
+
+Archivos creados (solo estructura visual base, sin lógica de negocio):
+
+| Archivo | Propósito |
+|---|---|
+| `components/navbar.tsx` | Navbar marketing: logo + links + CTA "Solicitar demo" |
+| `components/hero.tsx` | Hero section: H1 + subtitle + 2 CTAs |
+| `app/page.tsx` | Home page: `<Navbar /> + <main><Hero /></main>` |
+| `app/layout.tsx` | Root layout: html/body + Geist fonts + metadata |
+
+**Decisión arquitectónica:** Navbar está en `app/page.tsx` (no en `app/layout.tsx`) para no afectar el dashboard (`app/(dashboard)/layout.tsx`) ni la auth (`app/(auth)/layout.tsx`), que tienen sus propios layouts de pantalla completa.
+
+**Backend-first continúa:** Esta capa de presentación no toca lógica de negocio, APIs, ni stores. Es solo la fachada mínima del home público.
+
+---
+
 ## Comandos esenciales
 
 ```bash
