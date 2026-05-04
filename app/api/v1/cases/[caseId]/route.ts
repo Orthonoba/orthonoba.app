@@ -7,7 +7,7 @@ import { ok, fail, HTTP_STATUS } from '@/src/types/api'
 type Params = { caseId: string }
 
 // GET /api/v1/cases/[caseId]
-export const GET = withTenant<Params>(async (_req, { params: _params, session, tenant: _tenant }) => {
+export const GET = withTenant<Params>(async (_req, { params, session, tenant }) => {
   const dentalCase = getCaseById(params.caseId)
 
   if (!dentalCase || dentalCase.clinicId !== tenant.clinicId) {
@@ -27,7 +27,7 @@ export const GET = withTenant<Params>(async (_req, { params: _params, session, t
 })
 
 // PATCH /api/v1/cases/[caseId] — update case details
-export const PATCH = withTenant<Params>(async (req, { params, session, tenant }) => {
+export const PATCH = withTenant<Params>(async (req, { params: _params, session, tenant: _tenant }) => {
   const canEdit = ['super_admin', 'clinic_admin', 'doctor'].includes(session.role)
   if (!canEdit) {
     return NextResponse.json(fail('FORBIDDEN', 'No tienes permiso.'), { status: HTTP_STATUS.FORBIDDEN })

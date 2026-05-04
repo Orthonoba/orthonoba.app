@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState } from 'react'
 import { Plus, Trash2, Upload, ChevronUp, ChevronDown, ArrowLeft, BookOpen } from 'lucide-react'
 
@@ -260,7 +261,7 @@ export default function NewCoursePage() {
               <label className="aspect-video bg-slate-900 border-2 border-dashed border-slate-600 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-sky-500 transition group overflow-hidden">
                 <input type="file" accept="image/*" className="sr-only" onChange={handleThumbnail} />
                 {thumbnailPreview ? (
-                  <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
+                  <Image src={thumbnailPreview} alt="Thumbnail preview" fill className="object-cover" />
                 ) : (
                   <>
                     <Upload className="w-6 h-6 text-slate-500 group-hover:text-sky-400 transition" />

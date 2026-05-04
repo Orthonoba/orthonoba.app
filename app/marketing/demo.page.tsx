@@ -2,7 +2,7 @@ export default function MarketingDemoPage() {
   // Página demo para campañas de ejemplo
   // Conectará luego con Ads engine (Google / Meta)
 
-  const demoCampaign = {
+  const _demoCampaign = {
     id: "demo-001",
     name: "Dental Awareness Campaign",
     platform: "google-ads",

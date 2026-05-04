@@ -1,7 +1,7 @@
 export default function MarketingPricingPage() {
   // Control de planes SaaS marketing (no UI aún)
 
-  const pricingPlans = [
+  const _pricingPlans = [
     {
       id: "basic",
       name: "Starter Clinic Marketing",

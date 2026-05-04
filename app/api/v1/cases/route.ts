@@ -32,7 +32,7 @@ export const GET = withTenant(async (req, { session, tenant }) => {
 })
 
 // POST /api/v1/cases
-export const POST = withTenant(async (req, { session, tenant }) => {
+export const POST = withTenant(async (req, { session, tenant: _tenant }) => {
   const canCreate = ['super_admin', 'clinic_admin', 'doctor'].includes(session.role)
   if (!canCreate) {
     return NextResponse.json(fail('FORBIDDEN', 'No tienes permiso para crear casos.'), {

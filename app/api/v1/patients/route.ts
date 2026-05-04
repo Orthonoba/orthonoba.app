@@ -1,17 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { withTenant } from '@/src/middleware/with-tenant'
 import { createPatientSchema } from '@/src/modules/patient/validators'
-import { ok, fail, paginated, HTTP_STATUS } from '@/src/types/api'
+import { fail, paginated, HTTP_STATUS } from '@/src/types/api'
 import type { Patient } from '@/src/types/patient'
 
 // GET /api/v1/patients
-export const GET = withTenant(async (_req, { tenant }) => {
+export const GET = withTenant(async (_req, { tenant: _tenant }) => {
   // TODO: IPatientRepository.findAll(tenant.clinicId, filters)
   return NextResponse.json(paginated<Patient>([], 0, 1, 20))
 })
 
 // POST /api/v1/patients
-export const POST = withTenant(async (req, { session, tenant }) => {
+export const POST = withTenant(async (req, { session, tenant: _tenant }) => {
   const canWrite = ['super_admin', 'clinic_admin', 'doctor'].includes(session.role)
   if (!canWrite) {
     return NextResponse.json(fail('FORBIDDEN', 'No tienes permiso para crear pacientes.'), {

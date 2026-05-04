@@ -35,7 +35,7 @@ function StatCard({
     red:   { bg: 'bg-red-50',   text: 'text-red-700',   dot: 'bg-red-500'   },
     slate: { bg: 'bg-slate-50', text: 'text-slate-700', dot: 'bg-slate-400' },
   }
-  const c = colorMap[color]
+  const _c = colorMap[color]
   const trendUp   = trend === 'up'
   const trendDown = trend === 'down'
 
