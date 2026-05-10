@@ -1,7 +1,7 @@
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 // ORTHONOBA — Prisma Schema
 // Datasource: Neon DB / PostgreSQL
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
 generator client {
   provider = "prisma-client-js"
@@ -13,7 +13,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ─── Enums ────────────────────────────────────────────────────
+// ─── Enums ────────────────────────────────────────────────────────────────────
 
 enum TenantType {
   clinic
@@ -55,21 +55,94 @@ enum Gender {
   other
 }
 
+// Full dental lab logistics lifecycle
+// CLINIC: draft → pending → pickup_requested → pickup_confirmed → pickup_in_transit
+// LAB:    in_lab → design → production → quality_check → approved
+// RETURN: dispatch_ready → shipped → out_for_delivery → delivered → installed
+// EXTRA:  revision_requested | on_hold | cancelled
 enum OrderStatus {
   draft
   pending
-  in_design
-  manufacturing
-  qc
-  ready
+  pickup_requested
+  pickup_confirmed
+  pickup_in_transit
+  in_lab
+  design
+  production
+  quality_check
+  approved
+  dispatch_ready
+  shipped
+  out_for_delivery
   delivered
+  installed
+  revision_requested
+  on_hold
   cancelled
 }
 
 enum OrderPriority {
   normal
   urgent
-  stat
+  same_day
+}
+
+// CAD/CAM software used in dental labs
+enum CadSoftware {
+  exocad
+  three_shape
+  cerec
+  dental_wings
+  zirkonzahn
+  blue_sky_plan
+  materialise
+  nemo_cad
+  other
+}
+
+// Lab production stages (sequence in the workflow)
+enum ProductionStageType {
+  intake_inspection   // initial model/scan check
+  scan                // intraoral or desktop scanning
+  design_cad          // CAD/CAM digital design (Exocad, 3Shape, etc.)
+  nesting             // 3D print nesting or mill nesting
+  mill_print          // milling (zirconia, emax, pmma) or 3D printing
+  sintering           // zirconia sintering oven (1500°C+)
+  ceramics            // porcelain layering / glazing / staining
+  finishing           // polishing, occlusal adjustments, final esthetics
+  try_in_check        // fit check on articulator before dispatch
+  quality_check       // final QC inspection before packaging
+  packaging           // sterilisation + packaging
+  dispatch            // ready for collection / carrier handoff
+}
+
+enum ProductionStageStatus {
+  pending
+  in_progress
+  completed
+  skipped
+  blocked
+}
+
+enum QualityCheckOutcome {
+  passed
+  failed
+  revision_needed
+}
+
+enum PickupRequestStatus {
+  pending
+  scheduled
+  picked_up
+  cancelled
+}
+
+enum ShipmentStatus {
+  pending
+  in_transit
+  out_for_delivery
+  delivered
+  exception
 }
 
 enum LeadStatus {
@@ -116,35 +189,34 @@ enum CourseStatus {
   archived
 }
 
-// ─── Models ───────────────────────────────────────────────────
+// ─── Tenant ───────────────────────────────────────────────────────────────────
+// Root multi-tenant entity — both clinics and dental labs are tenants.
 
-/// Tenants — clinics and labs (multi-tenant root entity)
 model Tenant {
-  id         String       @id @default(cuid())
-  name       String
-  subdomain  String       @unique
-  type       TenantType
-  status     TenantStatus @default(trial)
-  plan       PlanTier     @default(starter)
-  email      String
-  phone      String?
-  address    String?
-  timezone   String       @default("Europe/Madrid")
-  currency   String       @default("EUR")
-  isActive   Boolean      @default(true)
-  settings   Json         @default("{}")
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  id        String       @id @default(cuid())
+  name      String
+  subdomain String       @unique
+  type      TenantType
+  status    TenantStatus @default(trial)
+  plan      PlanTier     @default(starter)
+  email     String
+  phone     String?
+  address   String?
+  timezone  String       @default("Europe/Madrid")
+  currency  String       @default("EUR")
+  isActive  Boolean      @default(true)
+  settings  Json         @default("{}")
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
-  // Relations
   users            User[]
   orders           DentalOrder[]
+  patients         Patient[]
   leads            Lead[]
+  campaigns        Campaign[]
   subscriptions    Subscription[]
   automationRules  AutomationRule[]
   scans            DentalScan[]
-  patients         Patient[]
-  campaigns        Campaign[]
   executions       AutomationExecution[]
   reminders        SmartReminder[]
   enrollments      CourseEnrollment[]
@@ -156,7 +228,8 @@ model Tenant {
   @@index([createdAt])
 }
 
-/// Platform users — one per tenant member
+// ─── User ─────────────────────────────────────────────────────────────────────
+
 model User {
   id             String     @id @default(cuid())
   tenantId       String
@@ -171,14 +244,13 @@ model User {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
-  // Relations
-  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  patientRecords Patient[]
-  assignedLeads  Lead[]           @relation("AssignedLeads")
-  uploadedScans  DentalScan[]
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patientRecords    Patient[]
+  assignedLeads     Lead[]             @relation("AssignedLeads")
+  uploadedScans     DentalScan[]
   instructedCourses Course[]
-  enrollments    CourseEnrollment[]
-  certificates   Certificate[]
+  enrollments       CourseEnrollment[]
+  certificates      Certificate[]
 
   @@index([tenantId])
   @@index([role])
@@ -186,7 +258,8 @@ model User {
   @@index([createdAt])
 }
 
-/// Patients — dental clinic patients
+// ─── Patient ──────────────────────────────────────────────────────────────────
+
 model Patient {
   id             String    @id @default(cuid())
   tenantId       String
@@ -199,73 +272,327 @@ model Patient {
   address        String?
   medicalHistory Json      @default("{}")
   allergies      String[]
+  doctorId       String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  // Relations
-  tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  doctor   User?         @relation(fields: [doctorId], references: [id])
-  doctorId String?
-  orders   DentalOrder[]
-  scans    DentalScan[]
+  tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  doctor User?         @relation(fields: [doctorId], references: [id])
+  orders DentalOrder[]
+  scans  DentalScan[]
 
   @@index([tenantId])
   @@index([email])
   @@index([createdAt])
 }
 
-/// Dental orders — production orders sent to labs
+// ─── DentalOrder ─────────────────────────────────────────────────────────────
+// A production order sent from a dental clinic to a dental laboratory.
+// Covers the full lifecycle from draft through delivery and installation.
+
 model DentalOrder {
-  id                  String        @id @default(cuid())
-  tenantId            String
-  patientId           String?
-  orderNumber         String        @unique
-  type                String
-  status              OrderStatus   @default(draft)
-  priority            OrderPriority @default(normal)
-  notes               String?
-  totalAmountEurCents Int           @default(0)
-  dueDate             DateTime?
-  deliveredAt         DateTime?
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  id          String        @id @default(cuid())
+  // Clinic that owns the order
+  tenantId    String
+  // Lab tenant handling production (set when lab accepts the order)
+  labTenantId String?
+  patientId   String?
+
+  // Human-readable order number, e.g. "ORD-2026-00042"
+  orderNumber String        @unique
+
+  // OrderType from src/types/orders.ts — stored as String for flexibility
+  // Examples: crown-zirconia | crown-emax | bridge-zirconia | veneer-ceramic
+  //           clear-aligner | essix-retainer | night-guard-hard | surgical-guide-static
+  //           implant-crown-screw-retained | denture-full | wax-up | study-model-3d
+  type        String
+
+  status      OrderStatus   @default(draft)
+  priority    OrderPriority @default(normal)
+
+  // Clinic-facing notes (shared with lab)
+  notes       String?
+  // Internal lab notes (not shown to clinic)
+  labNotes    String?
+
+  // Financial total in EUR cents (sum of OrderItem.totalEurCents)
+  totalAmountEurCents Int   @default(0)
+
+  // Key dates in the workflow
+  dueDate         DateTime?
+  labReceivedAt   DateTime?   // when lab physically received/accepted the order
+  labCompletedAt  DateTime?   // when lab finished production
+  deliveredAt     DateTime?   // when clinic confirmed receipt
+
+  // Cross-references
+  pickupJobId     String?     // external pickup/logistics job ID
+  shipmentId      String?     // carrier shipment reference
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  tenant  Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  patient Patient?    @relation(fields: [patientId], references: [id])
-  scans   DentalScan[]
+  tenant           Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient          Patient?             @relation(fields: [patientId], references: [id])
+  scans            DentalScan[]
+  items            OrderItem[]
+  cadDesign        CadDesign?
+  productionStages ProductionStage[]
+  qualityCheck     QualityCheck?
+  pickupRequest    PickupRequest?
+  shipmentTracking ShipmentTracking?
+  statusHistory    OrderStatusHistory[]
 
   @@index([tenantId])
+  @@index([labTenantId])
+  @@index([patientId])
   @@index([status])
   @@index([priority])
   @@index([dueDate])
   @@index([createdAt])
 }
 
-/// 3D scan files attached to orders or patients
+// ─── OrderItem ────────────────────────────────────────────────────────────────
+// One line item per tooth / unit of dental work inside an order.
+// An order for a 3-unit bridge has 3 items (one per tooth).
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  tenantId  String
+
+  // Type of dental work — matches OrderType in src/types/orders.ts
+  // e.g. crown-zirconia | bridge-zirconia | clear-aligner | night-guard-hard
+  orderType String
+
+  // FDI tooth notation (11–48). Null for full-arch works (aligners, dentures).
+  tooth     Int?
+
+  // Vita Classic / Vita 3D-Master shade (A1, A2, B1, 1M1, etc.)
+  shade     String?
+
+  // Material specification
+  // e.g. "Zirconia multicapa Cerec Zirconia ML", "IPS e.max CAD LT A1"
+  material  String?
+
+  description       String
+  quantity          Int    @default(1)
+  unitPriceEurCents Int    @default(0)
+  totalEurCents     Int    @default(0)
+  notes             String?
+  createdAt         DateTime @default(now())
+
+  order DentalOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([tenantId])
+  @@index([orderType])
+}
+
+// ─── CadDesign ────────────────────────────────────────────────────────────────
+// CAD/CAM digital design session for an order (Exocad, 3Shape, CEREC, etc.)
+// One design per order (one-to-one).
+
+model CadDesign {
+  id      String      @id @default(cuid())
+  orderId String      @unique
+  tenantId String
+
+  software      CadSoftware @default(exocad)
+  version       String?     // software version, e.g. "3.2 Rijeka"
+  designNotes   String?
+  fileStorageUrl String?    // URL to the CAD project file in object storage
+  workstationId String?     // which CAD workstation handled it
+  technicianId  String?     // which technician did the design
+
+  approvedBy  String?
+  approvedAt  DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order DentalOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([software])
+  @@index([createdAt])
+}
+
+// ─── ProductionStage ──────────────────────────────────────────────────────────
+// Each step in the lab production workflow.
+// Sequence 1 = intake, 2 = scan/design, … 12 = dispatch.
+
+model ProductionStage {
+  id       String @id @default(cuid())
+  orderId  String
+  tenantId String
+
+  type     ProductionStageType
+  status   ProductionStageStatus @default(pending)
+  sequence Int                   // execution order within the order
+
+  technicianId     String?
+  workstationId    String?
+  estimatedMinutes Int?
+
+  startedAt   DateTime?
+  completedAt DateTime?
+  notes       String?
+  blockedReason String?   // filled when status = blocked
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order DentalOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, sequence])
+  @@index([orderId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([type])
+}
+
+// ─── QualityCheck ─────────────────────────────────────────────────────────────
+// Final QC inspection before dispatch. One record per order.
+
+model QualityCheck {
+  id       String @id @default(cuid())
+  orderId  String @unique
+  tenantId String
+
+  checkedBy String  // userId of the technician who performed QC
+  outcome   QualityCheckOutcome
+
+  // Checklist items
+  dimensions        Boolean @default(false)  // fits articulator model
+  occlusion         Boolean @default(false)  // occlusal contacts correct
+  aesthetics        Boolean @default(false)  // shade, shape, surface texture
+  materialIntegrity Boolean @default(false)  // no cracks, voids, delamination
+  shade             Boolean?                 // shade matches prescription
+  margin            Boolean?                 // margin fit (crown/bridge only)
+
+  observations String?     // free-text QC notes
+  photoUrls    String[]    // storage URLs for QC photos
+
+  checkedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  order DentalOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([outcome])
+  @@index([checkedAt])
+}
+
+// ─── PickupRequest ────────────────────────────────────────────────────────────
+// Clinic requests physical pickup of models/impressions for delivery to lab.
+
+model PickupRequest {
+  id       String @id @default(cuid())
+  orderId  String @unique
+  tenantId String
+
+  status      PickupRequestStatus @default(pending)
+  requestedAt DateTime            @default(now())
+  scheduledAt DateTime?
+  pickedUpAt  DateTime?
+
+  notes       String?
+  pickupJobId String?  // external logistics / driver job ID
+  driverName  String?
+  driverPhone String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order DentalOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+// ─── ShipmentTracking ────────────────────────────────────────────────────────
+// Carrier shipment for returning the finished work from lab to clinic.
+
+model ShipmentTracking {
+  id       String @id @default(cuid())
+  orderId  String @unique
+  tenantId String
+
+  // ShipmentCarrier: correos | dhl | fedex | ups | seur | mrw | glovo | stuart | other
+  carrier        String
+  trackingNumber String
+  trackingUrl    String?
+
+  status            ShipmentStatus @default(pending)
+  estimatedDelivery DateTime?
+  deliveredAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order DentalOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([trackingNumber])
+  @@index([createdAt])
+}
+
+// ─── OrderStatusHistory ───────────────────────────────────────────────────────
+// Immutable audit trail of every status transition on an order.
+
+model OrderStatusHistory {
+  id      String @id @default(cuid())
+  orderId String
+
+  fromStatus    String  // previous OrderStatus
+  toStatus      String  // new OrderStatus
+  changedBy     String  // userId
+  changedByRole String  // UserRole
+  reason        String?
+  metadata      Json    @default("{}")
+
+  changedAt DateTime @default(now())
+
+  order DentalOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([changedAt])
+  @@index([toStatus])
+}
+
+// ─── DentalScan ───────────────────────────────────────────────────────────────
+// STL / DICOM / OBJ files attached to orders or patients.
+
 model DentalScan {
-  id          String   @id @default(cuid())
+  id          String @id @default(cuid())
   tenantId    String
   orderId     String?
   patientId   String?
   uploadedBy  String
+
   fileName    String
-  fileType    String
+  fileType    String   // stl | dicom | obj | ply | niri | dcm
   sizeBytes   BigInt
   storageUrl  String
   storagePath String
-  jaw         String?
-  side        String?
-  scanType    String?
-  notes       String?
-  uploadedAt  DateTime @default(now())
-  createdAt   DateTime @default(now())
 
-  // Relations
-  tenant    Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  order     DentalOrder? @relation(fields: [orderId], references: [id])
-  patient   Patient?    @relation(fields: [patientId], references: [id])
-  uploader  User        @relation(fields: [uploadedBy], references: [id])
+  jaw      String?  // upper | lower | full | bite
+  side     String?  // anterior | posterior | left | right | full
+  scanType String?  // intraoral | desktop | cbct | impression
+
+  notes     String?
+  uploadedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  tenant  Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  order   DentalOrder? @relation(fields: [orderId], references: [id])
+  patient Patient?     @relation(fields: [patientId], references: [id])
+  uploader User        @relation(fields: [uploadedBy], references: [id])
 
   @@index([tenantId])
   @@index([orderId])
@@ -273,30 +600,30 @@ model DentalScan {
   @@index([createdAt])
 }
 
-/// Marketing leads — prospective patients
+// ─── Marketing Lead ───────────────────────────────────────────────────────────
+
 model Lead {
-  id                String     @id @default(cuid())
-  tenantId          String
-  name              String
-  email             String?
-  phone             String?
-  status            LeadStatus @default(new)
-  source            String
-  score             Int?
-  scoreGrade        String?
-  assignedTo        String?
-  campaignId        String?
+  id        String     @id @default(cuid())
+  tenantId  String
+  name      String
+  email     String?
+  phone     String?
+  status    LeadStatus @default(new)
+  source    String     // facebook | instagram | google | referral | organic | whatsapp | other
+  score     Int?
+  scoreGrade String?   // A | B | C | D
+  assignedTo String?
+  campaignId String?
   estimatedValueEur Float?
   convertedAt       DateTime?
   lastContactedAt   DateTime?
   notes             String?
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  // Relations
-  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  assignee  User?     @relation("AssignedLeads", fields: [assignedTo], references: [id])
-  campaign  Campaign? @relation(fields: [campaignId], references: [id])
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assignee User?     @relation("AssignedLeads", fields: [assignedTo], references: [id])
+  campaign Campaign? @relation(fields: [campaignId], references: [id])
 
   @@index([tenantId])
   @@index([status])
@@ -306,12 +633,13 @@ model Lead {
   @@index([createdAt])
 }
 
-/// Marketing campaigns
+// ─── Marketing Campaign ────────────────────────────────────────────────────────
+
 model Campaign {
   id        String         @id @default(cuid())
   tenantId  String
   name      String
-  type      String
+  type      String         // email | whatsapp | google_ads | meta_ads | seo | referral
   status    CampaignStatus @default(draft)
   budget    Float?
   channel   String?
@@ -321,7 +649,6 @@ model Campaign {
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
-  // Relations
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   leads  Lead[]
 
@@ -331,26 +658,36 @@ model Campaign {
   @@index([createdAt])
 }
 
-/// Stripe subscriptions — one per tenant
+// ─── Subscription ────────────────────────────────────────────────────────────
+// Stripe SaaS subscription — one active record per tenant.
+
 model Subscription {
   id                   String       @id @default(cuid())
   stripeSubscriptionId String       @unique
-  tenantId             String
-  tenantType           String
-  plan                 String
-  billingCycle         BillingCycle @default(monthly)
-  status               String
-  currentPeriodStart   DateTime
-  currentPeriodEnd     DateTime
-  cancelAtPeriodEnd    Boolean      @default(false)
-  cancelledAt          DateTime?
-  trialEnd             DateTime?
   stripeCustomerId     String
-  stripePriceId        String
-  createdAt            DateTime     @default(now())
-  updatedAt            DateTime     @updatedAt
+  stripePriceId        String?
 
-  // Relations
+  tenantId    String
+  tenantType  String       // clinic | lab
+
+  plan         String       // starter | growth | scale | enterprise
+  billingCycle BillingCycle @default(monthly)
+  status       String       // trialing | active | past_due | cancelled | paused | unpaid
+
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  trialStart         DateTime?
+  trialEnd           DateTime?
+
+  cancelAtPeriodEnd Boolean   @default(false)
+  cancelledAt       DateTime?
+
+  couponCode      String?
+  discountPercent Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
@@ -359,25 +696,25 @@ model Subscription {
   @@index([createdAt])
 }
 
-/// Automation rules — trigger/condition/action definitions
-model AutomationRule {
-  id                  String               @id @default(cuid())
-  tenantId            String
-  name                String
-  description         String?
-  status              AutomationRuleStatus @default(draft)
-  trigger             String
-  conditions          Json                 @default("[]")
-  actions             Json                 @default("[]")
-  cronExpression      String?
-  maxFiringPerEntity  Int                  @default(1)
-  cooldownMinutes     Int                  @default(60)
-  totalFirings        Int                  @default(0)
-  lastFiredAt         DateTime?
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+// ─── AutomationRule ───────────────────────────────────────────────────────────
 
-  // Relations
+model AutomationRule {
+  id                 String               @id @default(cuid())
+  tenantId           String
+  name               String
+  description        String?
+  status             AutomationRuleStatus @default(draft)
+  trigger            String
+  conditions         Json                 @default("[]")
+  actions            Json                 @default("[]")
+  cronExpression     String?
+  maxFiringPerEntity Int                  @default(1)
+  cooldownMinutes    Int                  @default(60)
+  totalFirings       Int                  @default(0)
+  lastFiredAt        DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
   tenant     Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   executions AutomationExecution[]
 
@@ -387,23 +724,23 @@ model AutomationRule {
   @@index([createdAt])
 }
 
-/// Automation execution log — one record per rule firing
-model AutomationExecution {
-  id               String                    @id @default(cuid())
-  ruleId           String
-  tenantId         String
-  triggerType      String
-  triggerEntityId  String
-  triggerEntityType String
-  status           AutomationExecutionStatus @default(pending)
-  actionsExecuted  Json                      @default("[]")
-  errorMessage     String?
-  startedAt        DateTime?
-  completedAt      DateTime?
-  durationMs       Int?
-  createdAt        DateTime                  @default(now())
+// ─── AutomationExecution ──────────────────────────────────────────────────────
 
-  // Relations
+model AutomationExecution {
+  id                String                    @id @default(cuid())
+  ruleId            String
+  tenantId          String
+  triggerType       String
+  triggerEntityId   String
+  triggerEntityType String
+  status            AutomationExecutionStatus @default(pending)
+  actionsExecuted   Json                      @default("[]")
+  errorMessage      String?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  durationMs        Int?
+  createdAt         DateTime                  @default(now())
+
   rule   AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
   tenant Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -414,7 +751,8 @@ model AutomationExecution {
   @@index([createdAt])
 }
 
-/// Smart reminders — scheduled multi-channel notifications
+// ─── SmartReminder ────────────────────────────────────────────────────────────
+
 model SmartReminder {
   id          String   @id @default(cuid())
   tenantId    String
@@ -431,7 +769,6 @@ model SmartReminder {
   aiGenerated Boolean  @default(false)
   createdAt   DateTime @default(now())
 
-  // Relations
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
@@ -441,7 +778,8 @@ model SmartReminder {
   @@index([createdAt])
 }
 
-/// Academy courses — Orthonoba LMS
+// ─── Course ───────────────────────────────────────────────────────────────────
+
 model Course {
   id              String       @id @default(cuid())
   instructorId    String?
@@ -462,8 +800,7 @@ model Course {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
-  // Relations
-  instructor  User?             @relation(fields: [instructorId], references: [id])
+  instructor  User?              @relation(fields: [instructorId], references: [id])
   enrollments CourseEnrollment[]
   certificates Certificate[]
 
@@ -474,7 +811,8 @@ model Course {
   @@index([createdAt])
 }
 
-/// Course enrollments — user ↔ course join with progress
+// ─── CourseEnrollment ─────────────────────────────────────────────────────────
+
 model CourseEnrollment {
   id               String    @id @default(cuid())
   courseId         String
@@ -489,7 +827,6 @@ model CourseEnrollment {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  // Relations
   course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -502,7 +839,8 @@ model CourseEnrollment {
   @@index([createdAt])
 }
 
-/// Certificates — issued on course completion
+// ─── Certificate ──────────────────────────────────────────────────────────────
+
 model Certificate {
   id             String    @id @default(cuid())
   verificationId String    @unique @default(cuid())
@@ -516,7 +854,6 @@ model Certificate {
   metadata       Json      @default("{}")
   createdAt      DateTime  @default(now())
 
-  // Relations
   course      Course             @relation(fields: [courseId], references: [id])
   user        User               @relation(fields: [userId], references: [id])
   tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
